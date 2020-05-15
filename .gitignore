@@ -1,3 +1,6 @@
 # IDE
 .vscode/
 .idea/
+
+# Binaries for app and plugins
+/main
