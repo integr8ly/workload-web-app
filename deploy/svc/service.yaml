@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: workload-web-app
+  namespace: test-app
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    deploymentconfig: workload-web-app
+  sessionAffinity: None

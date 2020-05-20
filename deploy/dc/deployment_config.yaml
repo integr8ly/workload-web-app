@@ -9,10 +9,11 @@ spec:
   selector:
     app: workload-web-app
     deploymentconfig: workload-web-app
+  template:
     metadata:
       labels:
         app: workload-web-app
-        deploymentconfig: workload-web-app
+        deploymentconfig: workload-web-app 
       annotations:
     spec:
       containers:
