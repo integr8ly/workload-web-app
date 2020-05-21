@@ -1,0 +1,9 @@
+apiVersion: enmasse.io/v1beta1
+kind: AddressSpace
+metadata:
+  name: workload-app
+spec:
+  type: standard
+  plan: standard-unlimited
+  authenticationService:
+    name: none-authservice

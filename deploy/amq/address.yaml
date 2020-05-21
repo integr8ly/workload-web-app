@@ -1,0 +1,8 @@
+apiVersion: enmasse.io/v1beta1
+kind: Address
+metadata:
+  name: workload-app.queue-requests
+spec:
+  address: queue-requests
+  plan: standard-small-queue
+  type: queue
