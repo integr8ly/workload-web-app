@@ -2,7 +2,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: workload-web-app
-  namespace: test-app
 spec:
   ports:
     - name: 8080-tcp

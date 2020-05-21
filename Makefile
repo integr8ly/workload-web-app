@@ -1,4 +1,4 @@
-NAMESPACE=test-app
+NAMESPACE=workload-web-app
 
 define wait_command
 	@echo Waiting for $(2) for $(3)...
@@ -12,7 +12,7 @@ test:
 
 .PHONY: deploy
 deploy:
-	@oc new-project $(NAMESPACE)
+	-@oc new-project $(NAMESPACE)
 	@oc apply -f deploy/dc/deployment_config.yaml
 	@oc apply -f deploy/svc/service.yaml
 	@oc expose -f deploy/svc/service.yaml
