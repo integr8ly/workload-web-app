@@ -36,7 +36,7 @@ func (a *AMQChecks) run(ctx context.Context) error {
 	// Create client
 	t := &tls.Config{InsecureSkipVerify: true}
 	opts := amqp.ConnTLSConfig(t)
-	client, err := amqp.Dial(a.address, opts)
+	client, err := amqp.Dial(a.address, opts, amqp.ConnSASLAnonymous())
 	if err != nil {
 		return fmt.Errorf("failed to connect to %s: %v", a.address, err)
 	}

@@ -21,7 +21,7 @@ const (
 func init() {
 	log.SetOutput(os.Stdout)
 	if strings.ToLower(os.Getenv(envVarEnvironment)) == productionEnv {
-		log.SetLevel(log.WarnLevel)
+		log.SetLevel(log.InfoLevel)
 	} else {
 		log.SetLevel(log.DebugLevel)
 	}
