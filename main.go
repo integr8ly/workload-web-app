@@ -12,14 +12,15 @@ import (
 )
 
 const (
-	evnVarPort        = "PORT"
-	envVarAMQAddress  = "AMQ_ADDRESS"
-	envVarAMQQueue    = "AMQ_QUEUE"
-	envVarEnvironment = "ENVIRONMENT"
-	productionEnv     = "production"
-	envVarURL         = "RHSSO_SERVER_URL"
-	envVarUser        = "RHSSO_USER"
-	envVarPassword    = "RHSSO_PWD"
+	evnVarPort          = "PORT"
+	envVarAMQAddress    = "AMQ_ADDRESS"
+	envVarAMQQueue      = "AMQ_QUEUE"
+	envVarEnvironment   = "ENVIRONMENT"
+	productionEnv       = "production"
+	envVarURL           = "RHSSO_SERVER_URL"
+	envVarUser          = "RHSSO_USER"
+	envVarPassword      = "RHSSO_PWD"
+	envVarThreeScaleURL = "THREE_SCALE_URL"
 )
 
 func init() {
@@ -78,9 +79,24 @@ func startSSOChecks() {
 	}
 }
 
+func startThreeScaleChecks() {
+	url := os.Getenv(envVarThreeScaleURL)
+	if url != "" {
+		log.Infof("3scale: start 3scale checks; url: %s", url)
+		c := &ThreeScaleChecks{
+			url:      url,
+			interval: 1 * time.Second,
+		}
+		c.runForever()
+	} else {
+		log.Warnf("3sclae: 3scale checks are not started because the environment variables %s is not set", envVarThreeScaleURL)
+	}
+}
+
 func main() {
 	go startAMQChecks()
 	go startSSOChecks()
+	go startThreeScaleChecks()
 	startHttpServer()
 }
 
