@@ -3,16 +3,16 @@ kind: DeploymentConfig
 apiVersion: apps.openshift.io/v1
 metadata:
   name: workload-web-app
-  namespace: test-app
 spec:
   replicas: 1
   selector:
     app: workload-web-app
     deploymentconfig: workload-web-app
+  template:
     metadata:
       labels:
         app: workload-web-app
-        deploymentconfig: workload-web-app
+        deploymentconfig: workload-web-app 
       annotations:
     spec:
       containers:
