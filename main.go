@@ -3,17 +3,29 @@ package main
 import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
 const (
-	evnVarPort = "PORT"
-	envVarAMQAddress = "AMQ_ADDRESS"
-	envVarAMQQueue = "AMQ_QUEUE"
+	evnVarPort        = "PORT"
+	envVarAMQAddress  = "AMQ_ADDRESS"
+	envVarAMQQueue    = "AMQ_QUEUE"
+	envVarEnvironment = "ENVIRONMENT"
+	productionEnv     = "production"
 )
+
+func init() {
+	log.SetOutput(os.Stdout)
+	if strings.ToLower(os.Getenv(envVarEnvironment)) == productionEnv {
+		log.SetLevel(log.WarnLevel)
+	} else {
+		log.SetLevel(log.DebugLevel)
+	}
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
@@ -23,18 +35,19 @@ func startAMQChecks() {
 	addr := os.Getenv(envVarAMQAddress)
 	q := os.Getenv(envVarAMQQueue)
 	if addr != "" && q != "" {
-		log.Printf("Start AMQ checks. Address: %s Queue: %s", addr, q)
+		log.WithFields(log.Fields{
+			"address": addr,
+			"queue":   q,
+		}).Info("Start AMQ checks")
 		c := &AMQChecks{
 			address:     addr,
 			queueName:   q,
-			sendTimeout: 2*time.Second,
-			interval:    1*time.Second,
+			sendTimeout: 2 * time.Second,
+			interval:    1 * time.Second,
 		}
-		if err := c.runForever(); err != nil {
-			log.Printf("Failed to run AMQ checks due to error : %v", err)
-		}
+		c.runForever()
 	} else {
-		log.Printf("AMQ Checks are not started as there are no environment variables set")
+		log.Warnf("AMQ Checks are not started as env vars %s, %s are not set", envVarAMQAddress, envVarAMQQueue)
 	}
 }
 
@@ -50,6 +63,6 @@ func startHttpServer() {
 	}
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", handler)
-	log.Printf("Starting HTTP server on port: %s", p)
+	log.WithField("port", p).Infof("Starting HTTP server")
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", p), nil))
 }
