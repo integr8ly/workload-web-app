@@ -6,14 +6,8 @@ A test app for simulating the workload on the openshift cluster based on end-use
 
 To deploy the webapp on your cluster:
 
-> Note: 
-🍎 (Mac users) - install gtimeout util and create a symbolic link (so it can be referenced as timeout):
-```brew install coreutils && sudo ln -s /usr/local/bin/gtimeout /usr/local/bin/timeout```
-
 ### Steps
 
  Login to your cluster using ` oc login ` command and run 
 
 > ```make deploy```
-
-Try to access the route displayed in your terminal from any browser.
