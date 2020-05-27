@@ -24,6 +24,7 @@ function retry {
 
 oc new-project $NS
 
+# Deploy AMQ Resorces
 echo "Creating required AMQ resources"
 oc apply -f $DIR/amq/auth.yaml -n $NS
 oc apply -f $DIR/amq/addressspace.yaml -n $NS
@@ -46,18 +47,22 @@ RHSSO_PWD="$(oc get secret -n redhat-rhmi-user-sso credential-rhssouser -o 'json
 #Create rhsso secret
 oc create secret generic rhsso-secret --from-literal=RHSSO_PWD=$RHSSO_PWD --from-literal=RHSSO_USER=$RHSSO_USER
 
+# Deploy 3scale Resources
+THREE_SCALE_URL=$(${DIR}/3scale.sh deploy)
+
+# Deploy the Workload App
 echo "Deploying the webapp with the following parameters:"
 echo "AMQ_ADDRESS=$AMQ_ADDRESS"
 echo "AMQ_QUEUE=$AMQ_QUEUE"
 echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
-
+echo "THREE_SCALE_URL=$THREE_SCALE_URL"
 oc process -n $NS -f $DIR/template.yaml \
-   -p AMQ_ADDRESS=$AMQ_ADDRESS \
-   -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
-   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
-   | oc apply -n $NS -f -
+  -p AMQ_ADDRESS=$AMQ_ADDRESS \
+  -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
+  -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
+  -p THREE_SCALE_URL=$THREE_SCALE_URL |
+  oc apply -n $NS -f -
 
 echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
 oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
-
