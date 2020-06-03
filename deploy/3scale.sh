@@ -15,7 +15,7 @@ function xget() {
     local xml=$(cat) # read stdin
     local query=$1
 
-    local r=$(xpath -q -e "${query}" <<<"${xml}")
+    local r=$(xpath "${query}" 2>/dev/null <<<"${xml}")
 
     if [[ -z "${r}" ]]; then
         log "error: xget: failed to find '${query}' in: '${xml}'"
