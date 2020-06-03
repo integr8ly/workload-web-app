@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -16,6 +17,9 @@ const (
 	envVarAMQQueue    = "AMQ_QUEUE"
 	envVarEnvironment = "ENVIRONMENT"
 	productionEnv     = "production"
+	envVarURL         = "RHSSO_SERVER_URL"
+	envVarUser        = "RHSSO_USER"
+	envVarPassword    = "RHSSO_PWD"
 )
 
 func init() {
@@ -51,8 +55,32 @@ func startAMQChecks() {
 	}
 }
 
+func startSSOChecks() {
+	url := os.Getenv(envVarURL)
+	user := os.Getenv(envVarUser)
+	pwd := os.Getenv(envVarPassword)
+	realm := "master"
+	if url != "" && user != "" && pwd != "" && realm != "" {
+		log.WithFields(log.Fields{
+			"serverURL": url,
+			"realmName": realm,
+		}).Info("Start SSO Checks")
+		c := &SSOChecks{
+			serverURL: url,
+			user:      user,
+			password:  pwd,
+			realmName: realm,
+			interval:  7 * time.Second,
+		}
+		c.runForever()
+	} else {
+		log.Warnf("SSO checks are not started as env vars are not set correctly!")
+	}
+}
+
 func main() {
 	go startAMQChecks()
+	go startSSOChecks()
 	startHttpServer()
 }
 

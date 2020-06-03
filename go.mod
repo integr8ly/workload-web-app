@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/Azure/go-amqp v0.12.7
+	github.com/Nerzal/gocloak/v3 v3.10.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.6.0
 	github.com/sirupsen/logrus v1.4.2
