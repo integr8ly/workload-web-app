@@ -36,6 +36,18 @@ objects:
                   value: ${AMQ_QUEUE_NAME}
                 - name: ENVIRONMENT
                   value: production
+                - name: RHSSO_SERVER_URL
+                  value: ${RHSSO_SERVER_URL}
+                - name: RHSSO_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: rhsso-secret
+                      key: RHSSO_USER
+                - name: RHSSO_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: rhsso-secret
+                      key: RHSSO_PWD        
           restartPolicy: Always
   - kind: Service
     apiVersion: v1
@@ -61,3 +73,9 @@ parameters:
     description: The URL to connect to an AMQ address
   - name: AMQ_QUEUE_NAME
     description: The queue name to use for the AMQ address
+  - name: RHSSO_SERVER_URL
+    description: The RHSSO Server URL
+  - name: RHSSO_USER
+    description: The username for RHSSO login
+  - name: RHSSO_PWD
+    description: The Password for RHSSO login 

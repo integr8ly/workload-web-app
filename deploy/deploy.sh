@@ -39,14 +39,25 @@ retry 20 5 oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.stat
 AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
 AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
 
+#SSO credentials
+RHSSO_SERVER_URL="https://$(oc get routes -n redhat-rhmi-user-sso keycloak-edge -o 'jsonpath={.spec.host}')"
+RHSSO_USER="$(oc get secret -n redhat-rhmi-user-sso credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
+RHSSO_PWD="$(oc get secret -n redhat-rhmi-user-sso credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+#Create rhsso secret
+oc create secret generic rhsso-secret --from-literal=RHSSO_PWD=$RHSSO_PWD --from-literal=RHSSO_USER=$RHSSO_USER
+
 echo "Deploying the webapp with the following parameters:"
 echo "AMQ_ADDRESS=$AMQ_ADDRESS"
 echo "AMQ_QUEUE=$AMQ_QUEUE"
+echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
+
 oc process -n $NS -f $DIR/template.yaml \
    -p AMQ_ADDRESS=$AMQ_ADDRESS \
    -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
+   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
    | oc apply -n $NS -f -
 
 echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
 oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
+
