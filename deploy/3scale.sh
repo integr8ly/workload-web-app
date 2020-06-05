@@ -54,7 +54,7 @@ function setup() {
 function create_account() {
     local name=$1
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d org_name=${name} \
         -d username="${name}-user" \
@@ -66,7 +66,7 @@ function create_backend() {
     local name=$1
     local endpoint=$2
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d name=${name} \
         -d private_endpoint=${endpoint} \
@@ -78,7 +78,7 @@ function create_metric() {
     local backend_id=$1
     local name=$2
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d friendly_name=${name} \
         -d unit=hit \
@@ -90,7 +90,7 @@ function create_mapping_rule() {
     local backend_id=$1
     local metric_id=$2
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d http_method=GET \
         -d pattern="/" \
@@ -102,7 +102,7 @@ function create_mapping_rule() {
 function create_service() {
     local name=$1
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d name=${name} \
         -d system_name=${name} \
@@ -114,7 +114,7 @@ function create_backend_usage() {
     local service_id=$1
     local backend_id=$2
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d backend_api_id=${backend_id} \
         -d path="/" \
@@ -125,7 +125,7 @@ function create_application_plan() {
     local service_id=$1
     local name=$2
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d name=${name} \
         ${API_URL}/services/${service_id}/application_plans.xml |
@@ -137,7 +137,7 @@ function create_application() {
     local plan_id=$2
     local name=$3
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d plan_id=${plan_id} \
         -d name=${name} \
@@ -149,7 +149,7 @@ function create_application() {
 function deploy_proxy() {
     local service_id=$1
 
-    curl -fsS -X POST \
+    curl -kfsS -X POST \
         -d access_token=${TOKEN} \
         ${API_URL}/services/${service_id}/proxy/deploy.xml
 }
@@ -157,12 +157,12 @@ function deploy_proxy() {
 function promote_proxy() {
     local service_id=$1
 
-    local version=$(curl -sS -X GET \
+    local version=$(curl -ksS -X GET \
         -d access_token=${TOKEN} \
         ${API_URL}/services/${service_id}/proxy/configs/sandbox/latest.json |
         jget ".proxy_config.version")
 
-    curl -sS -X POST \
+    curl -ksS -X POST \
         -d access_token=${TOKEN} \
         -d to=production \
         ${API_URL}/services/${service_id}/proxy/configs/sandbox/${version}/promote.json |
@@ -172,13 +172,13 @@ function promote_proxy() {
 function delete_service() {
     local name=$1
 
-    local id=$(curl -sS -X GET \
+    local id=$(curl -ksS -X GET \
         -d access_token=${TOKEN} \
         ${API_URL}/services.xml |
         xget "//services/service/system_name[text()='${name}']/../id/text()")
 
     if [[ ! -z "${id}" ]]; then
-        curl -fsS -X DELETE -d access_token=${TOKEN} ${API_URL}/services/${id}.xml
+        curl -kfsS -X DELETE -d access_token=${TOKEN} ${API_URL}/services/${id}.xml
     fi
 }
 
@@ -186,26 +186,26 @@ function delete_backend() {
     local name=$1
 
     # we assume that there are no more than 500 backends
-    local id=$(curl -sS -X GET \
+    local id=$(curl -ksS -X GET \
         -d access_token=${TOKEN} \
         ${API_URL}/backend_apis.json |
         jget ".backend_apis[] | select(.backend_api.name == \"${name}\") | .backend_api.id")
 
     if [[ ! -z "${id}" ]]; then
-        curl -fsS -X DELETE -d access_token=${TOKEN} ${API_URL}/backend_apis/${id}.json
+        curl -kfsS -X DELETE -d access_token=${TOKEN} ${API_URL}/backend_apis/${id}.json
     fi
 }
 
 function delete_account() {
     local name=$1
 
-    local id=$(curl -sS -X GET \
+    local id=$(curl -ksS -X GET \
         -d access_token=${TOKEN} \
         ${API_URL}/accounts.xml |
         xget "//accounts/account/org_name[text()='${name}']/../id/text()")
 
     if [[ ! -z "${id}" ]]; then
-        curl -fsS -X DELETE -d access_token=${TOKEN} ${API_URL}/accounts/${id}.xml
+        curl -kfsS -X DELETE -d access_token=${TOKEN} ${API_URL}/accounts/${id}.xml
     fi
 }
 
