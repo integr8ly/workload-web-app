@@ -34,6 +34,8 @@ objects:
                   value: ${AMQ_ADDRESS}
                 - name: AMQ_QUEUE
                   value: ${AMQ_QUEUE_NAME}
+                - name: THREE_SCALE_URL
+                  value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
                   value: production
                 - name: RHSSO_SERVER_URL
@@ -47,7 +49,7 @@ objects:
                   valueFrom:
                     secretKeyRef:
                       name: rhsso-secret
-                      key: RHSSO_PWD        
+                      key: RHSSO_PWD
           restartPolicy: Always
   - kind: Service
     apiVersion: v1
@@ -78,4 +80,6 @@ parameters:
   - name: RHSSO_USER
     description: The username for RHSSO login
   - name: RHSSO_PWD
-    description: The Password for RHSSO login 
+    description: The Password for RHSSO login
+  - name: THREE_SCALE_URL
+    description: The API URL protected by 3scale
