@@ -67,6 +67,16 @@ objects:
       selector:
         deploymentconfig: workload-web-app
       sessionAffinity: None
+  - apiVersion: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    metadata:
+      name: workload-web-app
+    spec:
+      endpoints:
+        - port: http
+      selector:
+        matchLabels:
+          app: workload-web-app
 parameters:
   - name: PORT
     description: Port number

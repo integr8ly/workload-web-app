@@ -5,31 +5,23 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/Azure/go-amqp"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"time"
 )
 
-var (
-	messagesSentGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "amq_messages_sent_success",
-	})
-	messagesReceivedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "amq_messages_received_success",
-	})
-)
-
-func init() {
-	prometheus.MustRegister(messagesSentGauge)
-	prometheus.MustRegister(messagesReceivedGauge)
-}
+const amqSenderService = "amq_sender"
+const amqReceiverService = "amq_receiver"
 
 type AMQChecks struct {
 	address     string
 	queueName   string
 	sendTimeout time.Duration
 	interval    time.Duration
+}
+
+func (a *AMQChecks) url() string {
+	return fmt.Sprintf("%s%s", a.address, a.queueName)
 }
 
 func (a *AMQChecks) run(ctx context.Context) error {
@@ -88,11 +80,12 @@ func (a *AMQChecks) sendMessages(ctx context.Context, sender *amqp.Sender) error
 		// Send message
 		err := sender.Send(ctx, amqp.NewMessage([]byte("Hello!")))
 		cancel()
+		serviceTotalRequestsCounter.WithLabelValues(amqSenderService, a.url()).Inc()
 		if err != nil {
-			messagesSentGauge.Set(0)
+			updateErrorMetricsForService(amqSenderService, a.url(), err.Error(), a.interval.Seconds())
 			return err
 		} else {
-			messagesSentGauge.Set(1)
+			updateSuccessMetricsForService(amqSenderService, a.url())
 		}
 		time.Sleep(a.interval)
 	}
@@ -102,13 +95,14 @@ func (a *AMQChecks) receiveMessages(ctx context.Context, receiver *amqp.Receiver
 	for {
 		// Receive next message
 		msg, err := receiver.Receive(ctx)
+		serviceTotalRequestsCounter.WithLabelValues(amqReceiverService, a.url()).Inc()
 		if err != nil {
-			messagesReceivedGauge.Set(0)
+			updateErrorMetricsForService(amqReceiverService, a.url(), err.Error(), a.interval.Seconds())
 			return err
 		}
 		// Accept message
 		if msg != nil {
-			messagesReceivedGauge.Set(1)
+			updateSuccessMetricsForService(amqReceiverService, a.url())
 			msg.Accept()
 			log.WithField("message", string(msg.GetData())).Debug("Message received")
 		}
@@ -117,6 +111,8 @@ func (a *AMQChecks) receiveMessages(ctx context.Context, receiver *amqp.Receiver
 }
 
 func (a *AMQChecks) runForever() {
+	initCounters(amqSenderService, a.url())
+	initCounters(amqReceiverService, a.url())
 	for {
 		err := a.run(context.Background())
 		if err != nil {

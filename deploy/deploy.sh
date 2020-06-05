@@ -23,6 +23,7 @@ function retry {
 }
 
 oc new-project $NS
+oc label namespace $NS monitoring-key=middleware
 
 # Deploy AMQ Resorces
 echo "Creating required AMQ resources"
@@ -66,3 +67,6 @@ oc process -n $NS -f $DIR/template.yaml \
 echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
 oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
+
+echo "Creating Grafana Dashboard for the app"
+oc apply -n $NS -f $DIR/dashboard.yaml

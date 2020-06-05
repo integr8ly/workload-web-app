@@ -5,19 +5,10 @@ import (
 	"time"
 
 	"github.com/Nerzal/gocloak/v3"
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	ssoLoginGauge = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "sso_login_success",
-	})
-)
-
-func init() {
-	prometheus.MustRegister(ssoLoginGauge)
-}
+const ssoService = "sso_service"
 
 type SSOChecks struct {
 	serverURL string
@@ -33,16 +24,18 @@ func (s *SSOChecks) run() {
 	restyClient := client.RestyClient()
 	restyClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	_, err := client.LoginAdmin(s.user, s.password, s.realmName)
+	serviceTotalRequestsCounter.WithLabelValues(ssoService, s.serverURL).Inc()
 	if err != nil {
-		ssoLoginGauge.Set(0)
+		updateErrorMetricsForService(ssoService, s.serverURL, err.Error(), s.interval.Seconds())
 		log.Warnf("Login failed with error  :%v", err)
 	} else {
-		ssoLoginGauge.Set(1)
+		updateSuccessMetricsForService(ssoService, s.serverURL)
 		log.Info("Login succeeded!!")
 	}
 }
 
 func (s *SSOChecks) runForever() {
+	initCounters(ssoService, s.serverURL)
 	for {
 		s.run()
 		time.Sleep(s.interval)

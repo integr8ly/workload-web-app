@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,15 +14,36 @@ import (
 )
 
 const (
-	evnVarPort          = "PORT"
-	envVarAMQAddress    = "AMQ_ADDRESS"
-	envVarAMQQueue      = "AMQ_QUEUE"
-	envVarEnvironment   = "ENVIRONMENT"
-	productionEnv       = "production"
-	envVarURL           = "RHSSO_SERVER_URL"
-	envVarUser          = "RHSSO_USER"
-	envVarPassword      = "RHSSO_PWD"
-	envVarThreeScaleURL = "THREE_SCALE_URL"
+	evnVarPort              = "PORT"
+	envVarAMQAddress        = "AMQ_ADDRESS"
+	envVarAMQQueue          = "AMQ_QUEUE"
+	envVarEnvironment       = "ENVIRONMENT"
+	envVarRequestInterval   = "REQUEST_INTERVAL"
+	envVarURL               = "RHSSO_SERVER_URL"
+	envVarUser              = "RHSSO_USER"
+	envVarPassword          = "RHSSO_PWD"
+	envVarThreeScaleURL     = "THREE_SCALE_URL"
+
+	productionEnv           = "production"
+
+	metricsPrefix           = "workload_app"
+	defaultRequestsInterval = 10 * time.Second
+)
+
+var (
+	serviceUpGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: fmt.Sprintf("%s_service_up", metricsPrefix),
+	}, []string{"name", "service"})
+	serviceTotalRequestsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: fmt.Sprintf("%s_service_requests_total", metricsPrefix),
+	}, []string{"name", "service"})
+	serviceTotalErrorsCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: fmt.Sprintf("%s_service_requests_errors_total", metricsPrefix),
+	}, []string{"name", "service", "cause"})
+	serviceTotalDowntimeCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: fmt.Sprintf("%s_service_downtime_seconds", metricsPrefix),
+	}, []string{"name", "service"})
+	requestInterval = defaultRequestsInterval
 )
 
 func init() {
@@ -30,6 +53,15 @@ func init() {
 	} else {
 		log.SetLevel(log.DebugLevel)
 	}
+	if os.Getenv(envVarRequestInterval) != "" {
+		if val, err := strconv.Atoi(os.Getenv(envVarRequestInterval)); err != nil {
+			requestInterval = time.Duration(val) * time.Second
+		}
+	}
+	prometheus.MustRegister(serviceUpGauge)
+	prometheus.MustRegister(serviceTotalRequestsCounter)
+	prometheus.MustRegister(serviceTotalErrorsCounter)
+	prometheus.MustRegister(serviceTotalDowntimeCounter)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -43,12 +75,13 @@ func startAMQChecks() {
 		log.WithFields(log.Fields{
 			"address": addr,
 			"queue":   q,
+			"interval": requestInterval,
 		}).Info("Start AMQ checks")
 		c := &AMQChecks{
 			address:     addr,
 			queueName:   q,
 			sendTimeout: 2 * time.Second,
-			interval:    1 * time.Second,
+			interval:    requestInterval,
 		}
 		c.runForever()
 	} else {
@@ -65,13 +98,14 @@ func startSSOChecks() {
 		log.WithFields(log.Fields{
 			"serverURL": url,
 			"realmName": realm,
+			"interval": requestInterval,
 		}).Info("Start SSO Checks")
 		c := &SSOChecks{
 			serverURL: url,
 			user:      user,
 			password:  pwd,
 			realmName: realm,
-			interval:  7 * time.Second,
+			interval:  requestInterval,
 		}
 		c.runForever()
 	} else {
@@ -82,10 +116,13 @@ func startSSOChecks() {
 func startThreeScaleChecks() {
 	url := os.Getenv(envVarThreeScaleURL)
 	if url != "" {
-		log.Infof("3scale: start 3scale checks; url: %s", url)
+		log.WithFields(log.Fields{
+			"url": url,
+			"interval": requestInterval,
+		}).Info("Start 3scale checks")
 		c := &ThreeScaleChecks{
 			url:      url,
-			interval: 1 * time.Second,
+			interval: requestInterval,
 		}
 		c.runForever()
 	} else {
@@ -109,4 +146,21 @@ func startHttpServer() {
 	http.HandleFunc("/", handler)
 	log.WithField("port", p).Infof("Starting HTTP server")
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", p), nil))
+}
+
+func initCounters(name string, service string) {
+	// counters with dynamic labels need to explicitly set initial value
+	serviceTotalRequestsCounter.WithLabelValues(name, service).Add(0)
+	serviceTotalErrorsCounter.WithLabelValues(name, service, "").Add(0)
+	serviceTotalDowntimeCounter.WithLabelValues(name, service).Add(0)
+}
+
+func updateErrorMetricsForService(name string, service string, cause string, downtime float64) {
+	serviceUpGauge.WithLabelValues(name, service).Set(0)
+	serviceTotalErrorsCounter.WithLabelValues(name, service, cause).Inc()
+	serviceTotalDowntimeCounter.WithLabelValues(name, service).Add(downtime)
+}
+
+func updateSuccessMetricsForService(name string, service string) {
+	serviceUpGauge.WithLabelValues(name, service).Set(1)
 }
