@@ -1,6 +1,5 @@
 github.com/Azure/go-amqp v0.12.7 h1:/Uyqh30J5JrDFAOERQtEqP0qPWkrNXxr94vRnSa54Ac=
 github.com/Azure/go-amqp v0.12.7/go.mod h1:qApuH6OFTSKZFmCOxccvAv5rLizBQf4v8pRmG138DPo=
-github.com/Nerzal/gocloak v1.0.0 h1:WllsbIu1dYvdvka1/BbY7khZBJSTjSkGwyDsHHLQmIw=
 github.com/Nerzal/gocloak/v3 v3.10.0 h1:TmeiZLtpJBkTem8E4WhInMP4nam+l/96pqZ+Yo0yxcM=
 github.com/Nerzal/gocloak/v3 v3.10.0/go.mod h1:DiaslGyci+yzx4xBphOpQhA0nur1JPaZJdDsIn0Ckmk=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
