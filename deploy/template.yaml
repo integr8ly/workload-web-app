@@ -77,6 +77,58 @@ objects:
       selector:
         matchLabels:
           app: workload-web-app
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: rhmi-prometheus-k8s
+    rules:
+      - verbs:
+          - get
+          - list
+          - watch
+        apiGroups:
+          - ''
+        resources:
+          - services
+          - endpoints
+          - pods
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: rhmi-prometheus-k8s
+    subjects:
+      - kind: ServiceAccount
+        name: prometheus-k8s
+        namespace: openshift-monitoring
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: rhmi-prometheus-k8s
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: rhmi-operator
+    rules:
+      - apiGroups:
+         - rbac.authorization.k8s.io
+        resources:
+          - roles
+          - rolebindings
+        verbs:
+          - get
+          - list
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: rhmi-operator
+    subjects:
+      - kind: ServiceAccount
+        name: rhmi-operator
+        namespace: redhat-rhmi-operator
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: rhmi-operator
 parameters:
   - name: PORT
     description: Port number
