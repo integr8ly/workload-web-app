@@ -11,3 +11,10 @@ To deploy the webapp on your cluster:
  Login to your cluster using ` oc login ` command and run 
 
 > ```make deploy```
+
+## Delete the app
+
+To delete the app, run
+
+> ```make undeploy```
+
