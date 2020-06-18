@@ -35,6 +35,9 @@ echo "Waiting for AMQ AddressSpace to be ready"
 # unfortunately oc wait doesn't work for addressspace and address types (problem with AMQ itself)
 retry 20 5 oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep 'true'
 
+echo "Waiting for AMQ AddressSpace serviceHost"
+retry 20 5 oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}' | grep '.svc'
+
 echo "Waiting for AMQ Address to be ready"
 retry 20 5 oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep 'true'
 
