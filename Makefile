@@ -5,6 +5,7 @@ TOOLS_IMAGE=quay.io/integreatly/workload-web-app-tools
 
 in_container = ${CONTAINER_ENGINE} run --rm -it \
 	-e KUBECONFIG=/kube.config \
+	-e GRAFANA_DASHBOARD=${GRAFANA_DASHBOARD} \
 	-v "${HOME}/.kube/config":/kube.config:z \
 	-v "${PWD}":/workload-web-app \
 	-w /workload-web-app \
