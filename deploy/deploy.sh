@@ -3,6 +3,10 @@
 NS=${NAMESPACE:-"workload-web-app"}
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+if [[ ! -z "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
+  echo "Attention: using alternative image: ${WORKLOAD_WEB_APP_IMAGE}"
+fi
+
 function retry {
   local retries=$1; shift
   local wait=$1; shift
@@ -64,7 +68,8 @@ oc process -n $NS -f $DIR/template.yaml \
   -p AMQ_ADDRESS=$AMQ_ADDRESS \
   -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
-  -p THREE_SCALE_URL=$THREE_SCALE_URL |
+  -p THREE_SCALE_URL=$THREE_SCALE_URL \
+  -p WORKLOAD_WEB_APP_IMAGE=$WORKLOAD_WEB_APP_IMAGE |
   oc apply -n $NS -f -
 
 echo "Waiting for pod to be ready"
