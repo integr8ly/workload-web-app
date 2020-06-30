@@ -86,6 +86,7 @@ oc process -n $NS -f $DIR/template.yaml \
   -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
   -p THREE_SCALE_URL=$THREE_SCALE_URL \
+  -p AMQ_CRUD_NAMESPACE=$NS \
   -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
   oc apply -n $NS -f -
 

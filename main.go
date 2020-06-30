@@ -17,15 +17,16 @@ import (
 )
 
 const (
-	evnVarPort            = "PORT"
-	envVarAMQAddress      = "AMQ_ADDRESS"
-	envVarAMQQueue        = "AMQ_QUEUE"
-	envVarEnvironment     = "ENVIRONMENT"
-	envVarRequestInterval = "REQUEST_INTERVAL"
-	envVarURL             = "RHSSO_SERVER_URL"
-	envVarUser            = "RHSSO_USER"
-	envVarPassword        = "RHSSO_PWD"
-	envVarThreeScaleURL   = "THREE_SCALE_URL"
+	evnVarPort             = "PORT"
+	envVarAMQAddress       = "AMQ_ADDRESS"
+	envVarAMQQueue         = "AMQ_QUEUE"
+	envVarEnvironment      = "ENVIRONMENT"
+	envVarRequestInterval  = "REQUEST_INTERVAL"
+	envVarURL              = "RHSSO_SERVER_URL"
+	envVarUser             = "RHSSO_USER"
+	envVarPassword         = "RHSSO_PWD"
+	envVarThreeScaleURL    = "THREE_SCALE_URL"
+	envVarAMQCRUDNamespace = "AMQ_CRUD_NAMESPACE"
 
 	productionEnv = "production"
 )
@@ -49,7 +50,7 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
+	fmt.Fprintf(w, "Fuck You!")
 }
 
 func startAMQChecks() {
@@ -70,6 +71,22 @@ func startAMQChecks() {
 		c.RunForever()
 	} else {
 		log.Warnf("AMQ Checks are not started as env vars %s, %s are not set", envVarAMQAddress, envVarAMQQueue)
+	}
+}
+
+func startAMQCRUDChecks() {
+	namespace := os.Getenv(envVarAMQCRUDNamespace)
+	if namespace != "" {
+		log.Info("Start AMQ CRUD checks")
+		c, err := checks.NewAMQCRUDChecks(namespace)
+		if err != nil {
+			log.Warnf("Failed to start AMQ CRUD Checks with error: %s", err)
+			return
+		}
+
+		c.RunForever()
+	} else {
+		log.Warnf("AMQ CRUD Checks are not started as env var %s is not set", envVarAMQCRUDNamespace)
 	}
 }
 
@@ -118,6 +135,7 @@ func main() {
 	go startAMQChecks()
 	go startSSOChecks()
 	go startThreeScaleChecks()
+	go startAMQCRUDChecks()
 	startHttpServer()
 }
 
