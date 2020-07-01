@@ -34,6 +34,8 @@ objects:
                   value: ${AMQ_ADDRESS}
                 - name: AMQ_QUEUE
                   value: ${AMQ_QUEUE_NAME}
+                - name: AMQ_CONSOLE_URL
+                  value: ${AMQ_CONSOLE_URL}
                 - name: THREE_SCALE_URL
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
@@ -137,6 +139,8 @@ parameters:
     description: The URL to connect to an AMQ address
   - name: AMQ_QUEUE_NAME
     description: The queue name to use for the AMQ address
+  - name: AMQ_CONSOLE_URL
+    description: The AMQ console URL for the test addresss-space
   - name: RHSSO_SERVER_URL
     description: The RHSSO Server URL
   - name: RHSSO_USER

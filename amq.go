@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/Azure/go-amqp"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	"time"
 )
 
 const amqSenderService = "amq_sender"
@@ -16,6 +18,7 @@ const amqReceiverService = "amq_receiver"
 type AMQChecks struct {
 	address     string
 	queueName   string
+	consoleURL  string
 	sendTimeout time.Duration
 	interval    time.Duration
 }
@@ -33,6 +36,14 @@ func (a *AMQChecks) run(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to %s: %v", a.address, err)
 	}
 	defer client.Close()
+
+	//Access the AMQ console for the test address-space
+	resp, err := http.Get(a.consoleURL)
+	if err != nil {
+		log.Errorf("An error has occured, %v", err)
+	} else if resp.StatusCode != 200 {
+		log.Warnf("AMQ console is not reachable, with status code: %d", resp.StatusCode)
+	}
 
 	// Create session
 	session, err := client.NewSession()

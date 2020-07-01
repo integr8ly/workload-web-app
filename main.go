@@ -2,29 +2,31 @@ package main
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	evnVarPort              = "PORT"
-	envVarAMQAddress        = "AMQ_ADDRESS"
-	envVarAMQQueue          = "AMQ_QUEUE"
-	envVarEnvironment       = "ENVIRONMENT"
-	envVarRequestInterval   = "REQUEST_INTERVAL"
-	envVarURL               = "RHSSO_SERVER_URL"
-	envVarUser              = "RHSSO_USER"
-	envVarPassword          = "RHSSO_PWD"
-	envVarThreeScaleURL     = "THREE_SCALE_URL"
+	evnVarPort            = "PORT"
+	envVarAMQAddress      = "AMQ_ADDRESS"
+	envVarAMQQueue        = "AMQ_QUEUE"
+	envVarAMQConsoleURL   = "AMQ_CONSOLE_URL"
+	envVarEnvironment     = "ENVIRONMENT"
+	envVarRequestInterval = "REQUEST_INTERVAL"
+	envVarURL             = "RHSSO_SERVER_URL"
+	envVarUser            = "RHSSO_USER"
+	envVarPassword        = "RHSSO_PWD"
+	envVarThreeScaleURL   = "THREE_SCALE_URL"
 
-	productionEnv           = "production"
+	productionEnv = "production"
 
 	metricsPrefix           = "workload_app"
 	defaultRequestsInterval = 10 * time.Second
@@ -71,15 +73,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func startAMQChecks() {
 	addr := os.Getenv(envVarAMQAddress)
 	q := os.Getenv(envVarAMQQueue)
+	console := os.Getenv(envVarAMQConsoleURL)
 	if addr != "" && q != "" {
 		log.WithFields(log.Fields{
-			"address": addr,
-			"queue":   q,
-			"interval": requestInterval,
+			"address":    addr,
+			"queue":      q,
+			"consoleURL": console,
+			"interval":   requestInterval,
 		}).Info("Start AMQ checks")
 		c := &AMQChecks{
 			address:     addr,
 			queueName:   q,
+			consoleURL:  console,
 			sendTimeout: 2 * time.Second,
 			interval:    requestInterval,
 		}
@@ -98,7 +103,7 @@ func startSSOChecks() {
 		log.WithFields(log.Fields{
 			"serverURL": url,
 			"realmName": realm,
-			"interval": requestInterval,
+			"interval":  requestInterval,
 		}).Info("Start SSO Checks")
 		c := &SSOChecks{
 			serverURL: url,
@@ -117,7 +122,7 @@ func startThreeScaleChecks() {
 	url := os.Getenv(envVarThreeScaleURL)
 	if url != "" {
 		log.WithFields(log.Fields{
-			"url": url,
+			"url":      url,
 			"interval": requestInterval,
 		}).Info("Start 3scale checks")
 		c := &ThreeScaleChecks{

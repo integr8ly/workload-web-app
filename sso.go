@@ -30,7 +30,6 @@ func (s *SSOChecks) run() {
 		log.Warnf("Login failed with error  :%v", err)
 	} else {
 		updateSuccessMetricsForService(ssoService, s.serverURL)
-		log.Info("Login succeeded!!")
 	}
 }
 
