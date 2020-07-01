@@ -2,10 +2,12 @@ BUILD_TARGET=workload-app
 NAMESPACE=workload-web-app
 CONTAINER_ENGINE=docker
 TOOLS_IMAGE=quay.io/integreatly/workload-web-app-tools
+WORKLOAD_WEB_APP_IMAGE?= # Alternative image 
 
 in_container = ${CONTAINER_ENGINE} run --rm -it \
 	-e KUBECONFIG=/kube.config \
 	-e GRAFANA_DASHBOARD=${GRAFANA_DASHBOARD} \
+	-e WORKLOAD_WEB_APP_IMAGE=${WORKLOAD_WEB_APP_IMAGE} \
 	-v "${HOME}/.kube/config":/kube.config:z \
 	-v "${PWD}":/workload-web-app \
 	-w /workload-web-app \
@@ -24,6 +26,11 @@ local/deploy: image/build/tools
 
 local/undeploy: image/build/tools
 	$(call in_container,undeploy)
+
+local/build-deploy:
+	${CONTAINER_ENGINE} build -t ${WORKLOAD_WEB_APP_IMAGE} .
+	${CONTAINER_ENGINE} push ${WORKLOAD_WEB_APP_IMAGE}
+	$(call in_container,deploy)
 
 .PHONY: deploy
 deploy:
