@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT="3scale.sh"
 TOKEN=
 API_URL=
+NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhmi-3scale"}
 
 function log() {
     # always log to stderr to avoid interfiring with the stdout
@@ -41,11 +42,9 @@ function jget() {
 
 # Retrieve the 3scale API endpoint ant admin Token form OpenShift
 function setup() {
-    local namespace=redhat-rhmi-3scale
+    TOKEN="$(oc -n ${NAMESPACE} get secret system-seed -o jsonpath={.data.ADMIN_ACCESS_TOKEN} | base64 --decode)"
 
-    TOKEN="$(oc -n ${namespace} get secret system-seed -o jsonpath={.data.ADMIN_ACCESS_TOKEN} | base64 --decode)"
-
-    local host="$(oc -n ${namespace} get route -l zync.3scale.net/route-to=system-provider -o=jsonpath='{.items[0].spec.host}')"
+    local host="$(oc -n ${NAMESPACE} get route -l zync.3scale.net/route-to=system-provider -o=jsonpath='{.items[0].spec.host}')"
     API_URL="https://${host}/admin/api"
 
     log "API_URL=${API_URL}"
@@ -245,9 +244,14 @@ function deploy() {
     log "create workload-app-api-app in account=${account_id} with plan_id=${plan_id}"
     user_key=$(create_application "${account_id}" "${plan_id}" workload-app-api-app)
 
+    # need to wait for a bit otherwise deploy_proxy might fail
+    sleep 5
+
     # promote the API to the staging (sandbox) environment
     log "promote api to staging service_id=${service_id}"
     deploy_proxy "${service_id}" >/dev/null
+
+    sleep 5
 
     # promote the API to the production environment
     log "promote api to production service_id=${service_id}"

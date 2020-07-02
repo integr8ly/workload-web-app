@@ -6,7 +6,11 @@ WORKLOAD_WEB_APP_IMAGE?= # Alternative image
 
 in_container = ${CONTAINER_ENGINE} run --rm -it \
 	-e KUBECONFIG=/kube.config \
+	-e RHMI_V1=${RHMI_V1} \
 	-e GRAFANA_DASHBOARD=${GRAFANA_DASHBOARD} \
+	-e USERSSO_NAMESPACE=${USERSSO_NAMESPACE} \
+	-e THREESCALE_NAMESPACE=${THREESCALE_NAMESPACE} \
+	-e AMQONLINE_NAMESPACE=${AMQONLINE_NAMESPACE} \
 	-e WORKLOAD_WEB_APP_IMAGE=${WORKLOAD_WEB_APP_IMAGE} \
 	-v "${HOME}/.kube/config":/kube.config:z \
 	-v "${PWD}":/workload-web-app \
