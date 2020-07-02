@@ -3,6 +3,10 @@
 NS=${NAMESPACE:-"workload-web-app"}
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+if [[ ! -z "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
+  echo "Attention: using alternative image: ${WORKLOAD_WEB_APP_IMAGE}"
+fi
+
 function retry {
   local retries=$1; shift
   local wait=$1; shift
@@ -43,7 +47,7 @@ retry 20 5 oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.stat
 
 AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
 AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
-AMQ_CONSOLE_URL="https://$(oc get routes -l name=console  -n redhat-rhmi-amq-online -o 'jsonpath={.items[].spec.host}')/#/address-spaces/$NS/workload-app/standard/addresses"
+AMQ_CONSOLE_URL="https://$(oc get routes -l name=console  -n redhat-rhmi-amq-online -o 'jsonpath={.items[].spec.host}')/#/address-spaces"
 
 #SSO credentials
 RHSSO_SERVER_URL="https://$(oc get routes -n redhat-rhmi-user-sso keycloak-edge -o 'jsonpath={.spec.host}')"
@@ -68,7 +72,8 @@ oc process -n $NS -f $DIR/template.yaml \
   -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
   -p AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL \
   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
-  -p THREE_SCALE_URL=$THREE_SCALE_URL |
+  -p THREE_SCALE_URL=$THREE_SCALE_URL \
+  -p WORKLOAD_WEB_APP_IMAGE=$WORKLOAD_WEB_APP_IMAGE |
   oc apply -n $NS -f -
 
 echo "Waiting for pod to be ready"

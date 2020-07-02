@@ -1,13 +1,13 @@
-package main
+package checks
 
 import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/Azure/go-amqp"
+	"github.com/integr8ly/workload-web-app/pkg/counters"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -16,34 +16,25 @@ const amqSenderService = "amq_sender"
 const amqReceiverService = "amq_receiver"
 
 type AMQChecks struct {
-	address     string
-	queueName   string
-	consoleURL  string
-	sendTimeout time.Duration
-	interval    time.Duration
+	Address     string
+	QueueName   string
+	SendTimeout time.Duration
+	Interval    time.Duration
 }
 
 func (a *AMQChecks) url() string {
-	return fmt.Sprintf("%s%s", a.address, a.queueName)
+	return fmt.Sprintf("%s%s", a.Address, a.QueueName)
 }
 
 func (a *AMQChecks) run(ctx context.Context) error {
 	// Create client
 	t := &tls.Config{InsecureSkipVerify: true}
 	opts := amqp.ConnTLSConfig(t)
-	client, err := amqp.Dial(a.address, opts, amqp.ConnSASLAnonymous())
+	client, err := amqp.Dial(a.Address, opts, amqp.ConnSASLAnonymous())
 	if err != nil {
-		return fmt.Errorf("failed to connect to %s: %v", a.address, err)
+		return fmt.Errorf("failed to connect to %s: %v", a.Address, err)
 	}
 	defer client.Close()
-
-	//Access the AMQ console for the test address-space
-	resp, err := http.Get(a.consoleURL)
-	if err != nil {
-		log.Errorf("An error has occured, %v", err)
-	} else if resp.StatusCode != 200 {
-		log.Warnf("AMQ console is not reachable, with status code: %d", resp.StatusCode)
-	}
 
 	// Create session
 	session, err := client.NewSession()
@@ -53,7 +44,7 @@ func (a *AMQChecks) run(ctx context.Context) error {
 
 	// Create a sender
 	sender, err := session.NewSender(
-		amqp.LinkTargetAddress(a.queueName),
+		amqp.LinkTargetAddress(a.QueueName),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create a new sender: %v", err)
@@ -61,7 +52,7 @@ func (a *AMQChecks) run(ctx context.Context) error {
 
 	// Create a receiver
 	receiver, err := session.NewReceiver(
-		amqp.LinkSourceAddress(a.queueName),
+		amqp.LinkSourceAddress(a.QueueName),
 		amqp.LinkCredit(10),
 	)
 	if err != nil {
@@ -87,18 +78,18 @@ func (a *AMQChecks) run(ctx context.Context) error {
 
 func (a *AMQChecks) sendMessages(ctx context.Context, sender *amqp.Sender) error {
 	for {
-		ctx, cancel := context.WithTimeout(ctx, a.sendTimeout)
+		ctx, cancel := context.WithTimeout(ctx, a.SendTimeout)
 		// Send message
 		err := sender.Send(ctx, amqp.NewMessage([]byte("Hello!")))
 		cancel()
-		serviceTotalRequestsCounter.WithLabelValues(amqSenderService, a.url()).Inc()
+		counters.ServiceTotalRequestsCounter.WithLabelValues(amqSenderService, a.url()).Inc()
 		if err != nil {
-			updateErrorMetricsForService(amqSenderService, a.url(), err.Error(), a.interval.Seconds())
+			counters.UpdateErrorMetricsForService(amqSenderService, a.url(), err.Error(), a.Interval.Seconds())
 			return err
 		} else {
-			updateSuccessMetricsForService(amqSenderService, a.url())
+			counters.UpdateSuccessMetricsForService(amqSenderService, a.url())
 		}
-		time.Sleep(a.interval)
+		time.Sleep(a.Interval)
 	}
 }
 
@@ -106,29 +97,29 @@ func (a *AMQChecks) receiveMessages(ctx context.Context, receiver *amqp.Receiver
 	for {
 		// Receive next message
 		msg, err := receiver.Receive(ctx)
-		serviceTotalRequestsCounter.WithLabelValues(amqReceiverService, a.url()).Inc()
+		counters.ServiceTotalRequestsCounter.WithLabelValues(amqReceiverService, a.url()).Inc()
 		if err != nil {
-			updateErrorMetricsForService(amqReceiverService, a.url(), err.Error(), a.interval.Seconds())
+			counters.UpdateErrorMetricsForService(amqReceiverService, a.url(), err.Error(), a.Interval.Seconds())
 			return err
 		}
 		// Accept message
 		if msg != nil {
-			updateSuccessMetricsForService(amqReceiverService, a.url())
+			counters.UpdateSuccessMetricsForService(amqReceiverService, a.url())
 			msg.Accept()
 			log.WithField("message", string(msg.GetData())).Debug("Message received")
 		}
-		time.Sleep(a.interval)
+		time.Sleep(a.Interval)
 	}
 }
 
-func (a *AMQChecks) runForever() {
-	initCounters(amqSenderService, a.url())
-	initCounters(amqReceiverService, a.url())
+func (a *AMQChecks) RunForever() {
+	counters.InitCounters(amqSenderService, a.url())
+	counters.InitCounters(amqReceiverService, a.url())
 	for {
 		err := a.run(context.Background())
 		if err != nil {
 			log.WithField("error", err).Warnf("error occured")
-			time.Sleep(a.interval)
+			time.Sleep(a.Interval)
 		}
 	}
 }
