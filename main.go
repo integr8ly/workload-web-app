@@ -74,7 +74,7 @@ func startAMQChecks() {
 	}
 }
 
-func startAMQConsoleCheck() {
+func startAMQConsoleChecks() {
 	console := os.Getenv(envVarAMQConsoleURL)
 	if console != "" {
 		log.WithFields(log.Fields{
@@ -134,7 +134,7 @@ func startThreeScaleChecks() {
 
 func main() {
 	go startAMQChecks()
-	go startAMQConsoleCheck()
+	go startAMQConsoleChecks()
 	go startSSOChecks()
 	go startThreeScaleChecks()
 	startHttpServer()
