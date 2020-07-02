@@ -72,6 +72,8 @@ objects:
     kind: ServiceMonitor
     metadata:
       name: workload-web-app
+      labels:
+        monitoring-key: middleware
     spec:
       endpoints:
         - port: http
@@ -133,7 +135,7 @@ objects:
 parameters:
   - name: WORKLOAD_WEB_APP_IMAGE
     description: "Alternative image for local development"
-    value: quay.io/integreatly/workload-web-app:master
+    value: "quay.io/integreatly/workload-web-app:master"
   - name: PORT
     description: Port number
     value: "8080"

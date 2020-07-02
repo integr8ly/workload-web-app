@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
 NS=${NAMESPACE:-"workload-web-app"}
+AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
+USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
+IMAGE="quay.io/integreatly/workload-web-app:master"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ ! -z "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
   echo "Attention: using alternative image: ${WORKLOAD_WEB_APP_IMAGE}"
+  IMAGE=${WORKLOAD_WEB_APP_IMAGE}
 fi
 
 function retry {
@@ -27,35 +31,47 @@ function retry {
 }
 
 oc new-project $NS
-oc label namespace $NS monitoring-key=middleware
+oc label namespace $NS monitoring-key=middleware integreatly-middleware-service=true
 
 # Deploy AMQ Resorces
 echo "Creating required AMQ resources"
-oc apply -f $DIR/amq/auth.yaml -n $NS
+if [[ ! -z "${RHMI_V1}" ]]; then
+  echo "Creating none-authservice in $AMQONLINE_NS"
+  oc apply -f $DIR/amq/auth.yaml -n $AMQONLINE_NS
+else
+  oc apply -f $DIR/amq/auth.yaml -n $NS
+fi
+
 oc apply -f $DIR/amq/addressspace.yaml -n $NS
 oc apply -f $DIR/amq/address.yaml -n $NS
 
 echo "Waiting for AMQ AddressSpace to be ready"
 # unfortunately oc wait doesn't work for addressspace and address types (problem with AMQ itself)
-retry 20 5 oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep 'true'
+retry 30 5 oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep 'true'
 
 echo "Waiting for AMQ AddressSpace serviceHost"
-retry 20 5 oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}' | grep '.svc'
+retry 30 5 oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}' | grep '.svc'
 
 echo "Waiting for AMQ Address to be ready"
-retry 20 5 oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep 'true'
+retry 30 5 oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep 'true'
 
 AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
 AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
-AMQ_CONSOLE_URL="https://$(oc get routes -l name=console  -n redhat-rhmi-amq-online -o 'jsonpath={.items[].spec.host}')/#/address-spaces"
+AMQ_CONSOLE_URL="https://$(oc get routes -l name=console  -n $AMQONLINE_NS -o 'jsonpath={.items[].spec.host}')/#/address-spaces"
 
 #SSO credentials
-RHSSO_SERVER_URL="https://$(oc get routes -n redhat-rhmi-user-sso keycloak-edge -o 'jsonpath={.spec.host}')"
-RHSSO_USER="$(oc get secret -n redhat-rhmi-user-sso credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
-RHSSO_PWD="$(oc get secret -n redhat-rhmi-user-sso credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+if [[ ! -z "${RHMI_V1}" ]]; then
+  RHSSO_SERVER_URL="https://$(oc get routes -n $USERSSO_NS sso -o 'jsonpath={.spec.host}')"
+  RHSSO_USER="$(oc get secret -n $USERSSO_NS credential-rhsso -o 'jsonpath={.data.SSO_ADMIN_USERNAME}' | base64 --decode)"
+  RHSSO_PWD="$(oc get secret -n $USERSSO_NS credential-rhsso -o 'jsonpath={.data.SSO_ADMIN_PASSWORD}'| base64 --decode)"
+else
+  RHSSO_SERVER_URL="https://$(oc get routes -n $USERSSO_NS keycloak-edge -o 'jsonpath={.spec.host}')"
+  RHSSO_USER="$(oc get secret -n $USERSSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
+  RHSSO_PWD="$(oc get secret -n $USERSSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+fi
 
 #Create rhsso secret
-oc create secret generic rhsso-secret --from-literal=RHSSO_PWD=$RHSSO_PWD --from-literal=RHSSO_USER=$RHSSO_USER
+oc create secret generic rhsso-secret --from-literal=RHSSO_PWD=$RHSSO_PWD --from-literal=RHSSO_USER=$RHSSO_USER -n $NS
 
 # Deploy 3scale Resources
 THREE_SCALE_URL=$(${DIR}/3scale.sh deploy)
@@ -73,7 +89,7 @@ oc process -n $NS -f $DIR/template.yaml \
   -p AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL \
   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
   -p THREE_SCALE_URL=$THREE_SCALE_URL \
-  -p WORKLOAD_WEB_APP_IMAGE=$WORKLOAD_WEB_APP_IMAGE |
+  -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
   oc apply -n $NS -f -
 
 echo "Waiting for pod to be ready"

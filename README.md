@@ -1,26 +1,41 @@
 # workload-web-app
 A test app for simulating the workload on the openshift cluster based on end-user use cases in order to monitor the downtime of component products in integreatly during an upgrade.
 
-
 ## Deploying the Application on the cluster
 
+The app works for both RHMI 1.x and RHMI 2.x clusters.
 To deploy the webapp on your cluster:
 
-### Steps
+### RHMI 1.x Clusters
 
- Login to your cluster using ` oc login ` command and run 
+To deploy the app to a RHMI 1.x cluster, you will need to:
 
-> ```make local/deploy```
+1. Login to the RHMI 1.x cluster using ` oc login ` command
+2. Set the following environment variables:
+   ```
+   # These env vars are required
+   export RHMI_V1=true
+   export USERSSO_NAMESPACE=<user sso namespace>
+   export THREESCALE_NAMESPACE=<3scale namespace>
+   export AMQONLINE_NAMESPACE=<amqonline namespace>
+   # This env var is optional. Only set it if you want to view the metrics data using the Grafana dashboard
+   export GRAFANA_DASHBOARD=true
+   ```
+3. Then run this command to deploy the app:
+   ```make local/deploy```
 
-#### Grafana dashboard for the app
+### RHMI 2.x Clusters
 
-By default, the Grafana dashboard will not be created (to not break this [test](https://github.com/integr8ly/integreatly-operator/blob/master/test/common/dashboards_exist.go#L81)).
+To deploy the app to a RHMI 2.x cluster, you will need to:
 
-If you want to deploy the Grafana dashboard as part of the deploy, set the following environment variable (value doesn't matter, as long as it's not empty):
-
-```
-export GRAFANA_DASHBOARD=true
-```  
+1. Login to the RHMI 2.x cluster using ` oc login ` command
+2. Set the following environment variables:
+   ```
+   # This env var is optional. Only set it if you want to view the metrics data using the Grafana dashboard
+   export GRAFANA_DASHBOARD=true
+   ```
+3. Then run this command to deploy the app:
+   ```make local/deploy```
 
 ## Delete the app
 
