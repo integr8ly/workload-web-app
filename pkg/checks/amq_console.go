@@ -2,13 +2,11 @@ package checks
 
 import (
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/integr8ly/workload-web-app/pkg/counters"
+	"github.com/integr8ly/workload-web-app/pkg/utils"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const amqConsoleService = "amqconsole_service"
@@ -20,25 +18,15 @@ type AMQConsoleChecks struct {
 
 func (c *AMQConsoleChecks) run() {
 	//Get the config and use the bearerToken to pass through openshift auth-proxy
-	config, err := rest.InClusterConfig()
+	config, err := utils.GetClusterConfig()
 	if err != nil {
-		if err == rest.ErrNotInCluster {
-			// fall back to kubeconfig
-			kubeconfig := os.Getenv(clientcmd.RecommendedConfigPathEnvVar)
-			if kubeconfig == "" {
-				// fall back to recommended kubeconfig location
-				kubeconfig = clientcmd.RecommendedHomeFile
-			}
-
-			config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-			if err != nil {
-				log.Errorf("Error occured, %v", err)
-				return
-			}
-		}
+		log.Info("An error has occured : %v, err")
+		return
 	}
+
 	//Create new request using http
 	req, err := http.NewRequest("GET", c.ConsoleURL, nil)
+
 	//Add authorization header to the req
 	req.Header.Add("Authorization", config.BearerToken)
 	client := &http.Client{}

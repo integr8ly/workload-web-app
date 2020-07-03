@@ -6,16 +6,15 @@ require (
 	github.com/Azure/go-amqp v0.12.7
 	github.com/Nerzal/gocloak/v3 v3.10.0
 	github.com/enmasseproject/enmasse v0.0.0-20200629182149-84701919038b
+	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.10.0
 	github.com/sirupsen/logrus v1.6.0
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
-	k8s.io/apimachinery v0.18.5 // indirect
+	k8s.io/apimachinery v0.18.5
 	k8s.io/client-go v12.0.0+incompatible
-	github.com/imdario/mergo v0.3.9 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	k8s.io/utils v0.0.0-20200619165400-6e3d28b6ed19 // indirect
 )
 

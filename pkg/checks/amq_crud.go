@@ -2,19 +2,17 @@ package checks
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	enmasseV1beta1 "github.com/enmasseproject/enmasse/pkg/apis/enmasse/v1beta1"
 	enmasseClient "github.com/enmasseproject/enmasse/pkg/client/clientset/versioned"
 	"github.com/integr8ly/workload-web-app/pkg/counters"
+	"github.com/integr8ly/workload-web-app/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const amqCRUDService = "amq_crud"
@@ -25,23 +23,9 @@ type AMQCRUDChecks struct {
 }
 
 func NewAMQCRUDChecks(namespace string) (*AMQCRUDChecks, error) {
-	config, err := rest.InClusterConfig()
+	config, err := utils.GetClusterConfig()
 	if err != nil {
-		if err == rest.ErrNotInCluster {
-			// fall back to kubeconfig
-			kubeconfig := os.Getenv(clientcmd.RecommendedConfigPathEnvVar)
-			if kubeconfig == "" {
-				// fall back to recomaned kubeconfig location
-				kubeconfig = clientcmd.RecommendedHomeFile
-			}
-
-			config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	enmasse, err := enmasseClient.NewForConfig(config)
