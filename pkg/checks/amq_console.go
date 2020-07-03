@@ -42,7 +42,7 @@ func (c *AMQConsoleChecks) run() {
 	//Add authorization header to the req
 	req.Header.Add("Authorization", config.BearerToken)
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	_, err = client.Do(req)
 	counters.ServiceTotalRequestsCounter.WithLabelValues(amqConsoleService, c.ConsoleURL).Inc()
 	if err != nil {
 		counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, err.Error(), c.Interval.Seconds())
