@@ -33,6 +33,12 @@ function retry {
 oc new-project $NS
 oc label namespace $NS monitoring-key=middleware integreatly-middleware-service=true
 
+if [[ ! -z "${RHMI_V1}" ]]; then
+  echo "Delete all network policies"
+  sleep 5
+  oc delete networkpolicy --all -n $NS
+fi
+
 # Deploy AMQ Resorces
 echo "Creating required AMQ resources"
 if [[ ! -z "${RHMI_V1}" ]]; then
@@ -98,3 +104,6 @@ if [[ ! -z "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
   oc apply -n $NS -f $DIR/dashboard.yaml
 fi
+
+echo "Wait for 2 minutes for everything to get ready"
+sleep 120
