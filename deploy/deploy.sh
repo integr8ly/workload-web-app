@@ -104,3 +104,6 @@ if [[ ! -z "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
   oc apply -n $NS -f $DIR/dashboard.yaml
 fi
+
+echo "Wait for 2 minutes for everything to get ready"
+sleep 120
