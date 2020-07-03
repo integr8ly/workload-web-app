@@ -1,7 +1,6 @@
 package checks
 
 import (
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -51,8 +50,6 @@ func (c *AMQConsoleChecks) run() {
 
 	} else {
 		counters.UpdateSuccessMetricsForService(amqConsoleService, c.ConsoleURL)
-		body, _ := ioutil.ReadAll(resp.Body)
-		log.Info("response", string([]byte(body)))
 	}
 }
 
