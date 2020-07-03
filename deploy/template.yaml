@@ -39,6 +39,8 @@ objects:
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
                   value: production
+                - name: AMQ_CRUD_NAMESPACE
+                  value: ${AMQ_CRUD_NAMESPACE}
                 - name: RHSSO_SERVER_URL
                   value: ${RHSSO_SERVER_URL}
                 - name: RHSSO_USER
@@ -51,6 +53,7 @@ objects:
                     secretKeyRef:
                       name: rhsso-secret
                       key: RHSSO_PWD
+          serviceAccountName: workload-web-app
           restartPolicy: Always
   - kind: Service
     apiVersion: v1
@@ -68,6 +71,32 @@ objects:
       selector:
         deploymentconfig: workload-web-app
       sessionAffinity: None
+  - kind: ServiceAccount
+    apiVersion: v1
+    metadata:
+      name: workload-web-app
+  - kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: workload-web-app
+    rules:
+      - apiGroups:
+          - "*"
+        resources:
+          - "*"
+        verbs:
+          - "*"
+  - kind: RoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: workload-web-app
+    subjects:
+      - kind: ServiceAccount
+        name: workload-web-app
+    roleRef:
+      kind: Role
+      apiGroup: rbac.authorization.k8s.io
+      name: workload-web-app
   - apiVersion: monitoring.coreos.com/v1
     kind: ServiceMonitor
     metadata:
@@ -153,3 +182,5 @@ parameters:
     description: The Password for RHSSO login
   - name: THREE_SCALE_URL
     description: The API URL protected by 3scale
+  - name: AMQ_CRUD_NAMESPACE
+    description: The namespace were to create AMQ AddressSpaces and Addresses

@@ -1,11 +1,15 @@
 package checks
 
 import (
+	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/integr8ly/workload-web-app/pkg/counters"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const amqConsoleService = "amqconsole_service"
@@ -16,17 +20,39 @@ type AMQConsoleChecks struct {
 }
 
 func (c *AMQConsoleChecks) run() {
-	//TODO
 	//Get the config and use the bearerToken to pass through openshift auth-proxy
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		if err == rest.ErrNotInCluster {
+			// fall back to kubeconfig
+			kubeconfig := os.Getenv(clientcmd.RecommendedConfigPathEnvVar)
+			if kubeconfig == "" {
+				// fall back to recommended kubeconfig location
+				kubeconfig = clientcmd.RecommendedHomeFile
+			}
 
-	//Access the AMQ console
-	_, err := http.Get(c.ConsoleURL)
+			config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+			if err != nil {
+				log.Errorf("Error occured, %v", err)
+				return
+			}
+		}
+	}
+	//Create new request using http
+	req, err := http.NewRequest("GET", c.ConsoleURL, nil)
+	//Add authorization header to the req
+	req.Header.Add("Authorization", config.BearerToken)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	counters.ServiceTotalRequestsCounter.WithLabelValues(amqConsoleService, c.ConsoleURL).Inc()
 	if err != nil {
-		log.Errorf("An error has occured, %v", err)
 		counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, err.Error(), c.Interval.Seconds())
+		log.Warnf("AMQ Console is not reachable with error, %v", err)
+
 	} else {
 		counters.UpdateSuccessMetricsForService(amqConsoleService, c.ConsoleURL)
+		body, _ := ioutil.ReadAll(resp.Body)
+		log.Info("response", string([]byte(body)))
 	}
 }
 
