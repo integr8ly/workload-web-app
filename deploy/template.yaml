@@ -37,6 +37,8 @@ objects:
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
                   value: production
+                - name: AMQ_CRUD_NAMESPACE
+                  value: ${AMQ_CRUD_NAMESPACE}
                 - name: RHSSO_SERVER_URL
                   value: ${RHSSO_SERVER_URL}
                 - name: RHSSO_USER
