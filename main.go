@@ -50,7 +50,7 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Fuck You!")
+	fmt.Fprintf(w, "Hello World!")
 }
 
 func startAMQChecks() {
