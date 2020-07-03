@@ -17,7 +17,7 @@ type AMQConsoleChecks struct {
 
 func (c *AMQConsoleChecks) run() {
 	//TODO
-	//Get the config and use the bearerToken to pass through
+	//Get the config and use the bearerToken to pass through openshift auth-proxy
 
 	//Access the AMQ console
 	_, err := http.Get(c.ConsoleURL)

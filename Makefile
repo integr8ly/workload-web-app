@@ -2,7 +2,7 @@ BUILD_TARGET=workload-app
 NAMESPACE=workload-web-app
 CONTAINER_ENGINE=docker
 TOOLS_IMAGE=quay.io/integreatly/workload-web-app-tools
-WORKLOAD_WEB_APP_IMAGE?= quay.io/stephinrachel/workload-app:latest # Alternative image 
+WORKLOAD_WEB_APP_IMAGE?= # Alternative image 
 
 in_container = ${CONTAINER_ENGINE} run --rm -it \
 	-e KUBECONFIG=/kube.config \
