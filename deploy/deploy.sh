@@ -51,13 +51,13 @@ oc apply -f $DIR/amq/address.yaml -n $NS
 
 echo "Waiting for AMQ AddressSpace to be ready"
 # unfortunately oc wait doesn't work for addressspace and address types (problem with AMQ itself)
-wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Addressspace is ready" "5m" "60"
+wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Addressspace is ready" "5m" "10"
 
 echo "Waiting for AMQ AddressSpace serviceHost"
-wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name==\"messaging\")].serviceHost}' | grep -q '.svc'" "Addressspace serviceHost is ready" "5m" "60"
+wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name==\"messaging\")].serviceHost}' | grep -q '.svc'" "Addressspace serviceHost is ready" "5m" "10"
 
 echo "Waiting for AMQ Address to be ready"
-wait_for "oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Address is ready" "5m" "60"
+wait_for "oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Address is ready" "5m" "10"
 
 AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
 AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
@@ -79,7 +79,7 @@ oc create secret generic rhsso-secret --from-literal=RHSSO_PWD=$RHSSO_PWD --from
 # Deploy 3scale Resources
 THREE_SCALE_URL=$(${DIR}/3scale.sh deploy)
 echo "Waiting for the ${THREE_SCALE_URL} to be reachable"
-wait_for "curl -s -o /dev/null -I -w '%{http_code}' ${THREE_SCALE_URL} | grep  -q 200" "Wait until api available" "10m" "120"
+wait_for "curl -s -o /dev/null -I -w '%{http_code}' ${THREE_SCALE_URL} | grep  -q 200" "3SCALE API to be reachable" "10m" "10"
 
 # Deploy the Workload App
 echo "Deploying the webapp with the following parameters:"
@@ -98,12 +98,10 @@ oc process -n $NS -f $DIR/template.yaml \
 
 echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
-oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
+oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=60s
 
 if [[ ! -z "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
   oc apply -n $NS -f $DIR/dashboard.yaml
 fi
 
-echo "Wait for 2 minutes for everything to get ready"
-sleep 120
