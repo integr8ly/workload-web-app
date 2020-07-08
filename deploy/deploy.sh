@@ -98,7 +98,7 @@ oc process -n $NS -f $DIR/template.yaml \
 
 echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
-oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=60s
+oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
 
 if [[ ! -z "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
