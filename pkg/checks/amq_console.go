@@ -2,6 +2,7 @@ package checks
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/integr8ly/workload-web-app/pkg/counters"
@@ -30,12 +31,15 @@ func (c *AMQConsoleChecks) run() {
 	//Add authorization header to the req
 	req.Header.Add("Authorization", config.BearerToken)
 	client := &http.Client{}
-	_, err = client.Do(req)
+	resp, err := client.Do(req)
 	counters.ServiceTotalRequestsCounter.WithLabelValues(amqConsoleService, c.ConsoleURL).Inc()
 	if err != nil {
 		counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, err.Error(), c.Interval.Seconds())
 		log.Warnf("AMQ Console is not reachable with error, %v", err)
 
+	} else if resp.StatusCode != http.StatusOK {
+		counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, strconv.Itoa(resp.StatusCode), c.Interval.Seconds())
+		log.Warnf("AMQ Console is not reachable with status code: %d", resp.StatusCode)
 	} else {
 		counters.UpdateSuccessMetricsForService(amqConsoleService, c.ConsoleURL)
 	}
