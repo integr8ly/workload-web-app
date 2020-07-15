@@ -79,7 +79,7 @@ oc create secret generic rhsso-secret --from-literal=RHSSO_PWD=$RHSSO_PWD --from
 # Deploy 3scale Resources
 THREE_SCALE_URL=$(${DIR}/3scale.sh deploy)
 echo "Waiting for the ${THREE_SCALE_URL} to be reachable"
-wait_for "curl -s -o /dev/null -I -w '%{http_code}' ${THREE_SCALE_URL} | grep  -q 200" "3SCALE API to be reachable" "10m" "10"
+wait_for "curl -s -o /dev/null -w '%{http_code}' ${THREE_SCALE_URL} | grep 200" "3SCALE API to be reachable" "10m" "10"
 
 # Deploy the Workload App
 echo "Deploying the webapp with the following parameters:"
