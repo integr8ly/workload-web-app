@@ -44,7 +44,7 @@ function jget() {
 function setup() {
     TOKEN="$(oc -n ${NAMESPACE} get secret system-seed -o jsonpath={.data.ADMIN_ACCESS_TOKEN} | base64 --decode)"
 
-    local host="$(oc -n ${NAMESPACE} get route -l zync.3scale.net/route-to=system-provider -o=jsonpath='{.items[0].spec.host}')"
+    local host="$(oc -n "${NAMESPACE}" get route -l zync.3scale.net/route-to=system-provider -o=json | jq -r '.items[].spec | select(.host|match("3scale-admin")) | .host')"
     API_URL="https://${host}/admin/api"
 
     log "API_URL=${API_URL}"
