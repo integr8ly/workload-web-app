@@ -1,8 +1,8 @@
 package checks
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/integr8ly/workload-web-app/pkg/counters"
@@ -14,41 +14,46 @@ const amqConsoleService = "amqconsole_service"
 
 type AMQConsoleChecks struct {
 	ConsoleURL string
+	Username   string
+	Password   string
 	Interval   time.Duration
 }
 
-func (c *AMQConsoleChecks) run() {
-	//Get the config and use the bearerToken to pass through openshift auth-proxy
-	config, err := utils.GetClusterConfig()
+func (c *AMQConsoleChecks) run() error {
+	client, err := utils.NewOAuthHTTPClient()
 	if err != nil {
-		log.Info("An error has occured : %v, err")
-		return
+		return err
 	}
 
-	//Create new request using http
-	req, err := http.NewRequest("GET", c.ConsoleURL, nil)
-
-	//Add authorization header to the req
-	req.Header.Add("Authorization", config.BearerToken)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	counters.ServiceTotalRequestsCounter.WithLabelValues(amqConsoleService, c.ConsoleURL).Inc()
+	err = utils.AuthenticateClientThroughProxyOAuth(client, c.ConsoleURL, c.Username, c.Password)
 	if err != nil {
-		counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, err.Error(), c.Interval.Seconds())
-		log.Warnf("AMQ Console is not reachable with error, %v", err)
-
-	} else if resp.StatusCode != http.StatusOK {
-		counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, strconv.Itoa(resp.StatusCode), c.Interval.Seconds())
-		log.Warnf("AMQ Console is not reachable with status code: %d", resp.StatusCode)
-	} else {
-		counters.UpdateSuccessMetricsForService(amqConsoleService, c.ConsoleURL)
+		return err
 	}
+	log.Debug("amq_console: successfully logged-in to AMQ Console")
+
+	response, err := client.Get(c.ConsoleURL)
+	if err != nil {
+		return fmt.Errorf("Request to %s failed with error: %s", c.ConsoleURL, err)
+	}
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("Request to %s retured status code %d", c.ConsoleURL, response.StatusCode)
+	}
+	log.Debug("amq_console: successfully requested AMQ Console")
+	return nil
 }
 
 func (c *AMQConsoleChecks) RunForever() {
 	counters.InitCounters(amqConsoleService, c.ConsoleURL)
 	for {
-		c.run()
+		err := c.run()
+		counters.ServiceTotalRequestsCounter.WithLabelValues(amqConsoleService, c.ConsoleURL).Inc()
+		if err != nil {
+			log.Errorf("Failed to login to AMQ Console with error, %v", err)
+			counters.UpdateErrorMetricsForService(amqConsoleService, c.ConsoleURL, err.Error(), c.Interval.Seconds())
+		} else {
+			counters.UpdateSuccessMetricsForService(amqConsoleService, c.ConsoleURL)
+		}
+
 		time.Sleep(c.Interval)
 	}
 }

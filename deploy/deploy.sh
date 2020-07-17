@@ -5,6 +5,8 @@ AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
 USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
 IMAGE="quay.io/integreatly/workload-web-app:master"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUSTOMER_ADMIN="customer-admin01"
+CUSTOMER_ADMIN_PASSWORD="Password1"
 
 if [[ ! -z "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
   echo "Attention: using alternative image: ${WORKLOAD_WEB_APP_IMAGE}"
@@ -61,7 +63,12 @@ wait_for "oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.statu
 
 AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
 AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
-AMQ_CONSOLE_URL="https://$(oc get routes -l name=console  -n $AMQONLINE_NS -o 'jsonpath={.items[].spec.host}')/#/address-spaces"
+
+AMQ_CONSOLE_URL="https://$(oc get routes -l name=console -n $AMQONLINE_NS -o 'jsonpath={.items[].spec.host}')"
+oc create secret generic amq-console-secret \
+  --from-literal=AMQ_CONSOLE_USER=${CUSTOMER_ADMIN} \
+  --from-literal=AMQ_CONSOLE_PWD=${CUSTOMER_ADMIN_PASSWORD} \
+  -n $NS
 
 #SSO credentials
 if [[ ! -z "${RHMI_V1}" ]]; then

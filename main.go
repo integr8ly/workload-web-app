@@ -17,17 +17,19 @@ import (
 )
 
 const (
-	evnVarPort             = "PORT"
-	envVarAMQAddress       = "AMQ_ADDRESS"
-	envVarAMQQueue         = "AMQ_QUEUE"
-	envVarEnvironment      = "ENVIRONMENT"
-	envVarRequestInterval  = "REQUEST_INTERVAL"
-	envVarURL              = "RHSSO_SERVER_URL"
-	envVarUser             = "RHSSO_USER"
-	envVarPassword         = "RHSSO_PWD"
-	envVarThreeScaleURL    = "THREE_SCALE_URL"
-	envVarAMQCRUDNamespace = "AMQ_CRUD_NAMESPACE"
-	envVarAMQConsoleURL    = "AMQ_CONSOLE_URL"
+	evnVarPort               = "PORT"
+	envVarAMQAddress         = "AMQ_ADDRESS"
+	envVarAMQQueue           = "AMQ_QUEUE"
+	envVarEnvironment        = "ENVIRONMENT"
+	envVarRequestInterval    = "REQUEST_INTERVAL"
+	envVarURL                = "RHSSO_SERVER_URL"
+	envVarUser               = "RHSSO_USER"
+	envVarPassword           = "RHSSO_PWD"
+	envVarThreeScaleURL      = "THREE_SCALE_URL"
+	envVarAMQCRUDNamespace   = "AMQ_CRUD_NAMESPACE"
+	envVarAMQConsoleURL      = "AMQ_CONSOLE_URL"
+	envVarAMQConsoleUsername = "AMQ_CONSOLE_USER"
+	envVarAMQConsolePassword = "AMQ_CONSOLE_PWD"
 
 	productionEnv = "production"
 )
@@ -77,18 +79,23 @@ func startAMQChecks() {
 
 func startAMQConsoleChecks() {
 	console := os.Getenv(envVarAMQConsoleURL)
-	if console != "" {
+	username := os.Getenv(envVarAMQConsoleUsername)
+	password := os.Getenv(envVarAMQConsolePassword)
+	if console != "" && username != "" && password != "" {
 		log.WithFields(log.Fields{
 			"consoleURL": console,
 			"interval":   counters.RequestInterval,
 		}).Info("Start AMQ Console checks")
 		c := &checks.AMQConsoleChecks{
 			ConsoleURL: console,
+			Username:   username,
+			Password:   password,
 			Interval:   counters.RequestInterval,
 		}
 		c.RunForever()
 	} else {
-		log.Warnf("AMQ Console checks are not started as env var %s is not set correctly!", envVarAMQConsoleURL)
+		log.Warnf("AMQ Console checks are not started as env vars %s, %s, %s are not set correctly!",
+			envVarAMQConsoleURL, envVarAMQConsoleUsername, envVarAMQConsolePassword)
 	}
 }
 func startAMQCRUDChecks() {

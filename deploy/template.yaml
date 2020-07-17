@@ -35,6 +35,16 @@ objects:
                   value: ${AMQ_QUEUE_NAME}
                 - name: AMQ_CONSOLE_URL
                   value: ${AMQ_CONSOLE_URL}
+                - name: AMQ_CONSOLE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: amq-console-secret
+                      key: AMQ_CONSOLE_USER
+                - name: AMQ_CONSOLE_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: amq-console-secret
+                      key: AMQ_CONSOLE_PWD
                 - name: THREE_SCALE_URL
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
@@ -173,7 +183,11 @@ parameters:
   - name: AMQ_QUEUE_NAME
     description: The queue name to use for the AMQ address
   - name: AMQ_CONSOLE_URL
-    description: The AMQ console URL for the test addresss-space
+    description: The AMQ console URL for testing the console
+  - name: AMQ_CONSOLE_USER
+    description: The RHMI user to login to AMQ console
+  - name: AMQ_CONSOLE_PWD
+    description: The password for the RHMI user to login to AMQ console
   - name: RHSSO_SERVER_URL
     description: The RHSSO Server URL
   - name: RHSSO_USER
