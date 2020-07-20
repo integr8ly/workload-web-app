@@ -5,6 +5,8 @@ AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
 USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
 IMAGE="quay.io/integreatly/workload-web-app:master"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CUSTOMER_ADMIN="customer-admin01"
+CUSTOMER_ADMIN_PASSWORD="Password1"
 
 if [[ ! -z "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
   echo "Attention: using alternative image: ${WORKLOAD_WEB_APP_IMAGE}"
@@ -62,6 +64,12 @@ wait_for "oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.statu
 AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
 AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
 
+AMQ_CONSOLE_URL="https://$(oc get routes -l name=console -n $AMQONLINE_NS -o 'jsonpath={.items[].spec.host}')"
+oc create secret generic amq-console-secret \
+  --from-literal=AMQ_CONSOLE_USER=${CUSTOMER_ADMIN} \
+  --from-literal=AMQ_CONSOLE_PWD=${CUSTOMER_ADMIN_PASSWORD} \
+  -n $NS
+
 #SSO credentials
 if [[ ! -z "${RHMI_V1}" ]]; then
   RHSSO_SERVER_URL="https://$(oc get routes -n $USERSSO_NS sso -o 'jsonpath={.spec.host}')"
@@ -85,11 +93,13 @@ wait_for "curl -s -o /dev/null -w '%{http_code}' ${THREE_SCALE_URL} | grep 200" 
 echo "Deploying the webapp with the following parameters:"
 echo "AMQ_ADDRESS=$AMQ_ADDRESS"
 echo "AMQ_QUEUE=$AMQ_QUEUE"
+echo "AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL"
 echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
 echo "THREE_SCALE_URL=$THREE_SCALE_URL"
 oc process -n $NS -f $DIR/template.yaml \
   -p AMQ_ADDRESS=$AMQ_ADDRESS \
   -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
+  -p AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL \
   -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
   -p THREE_SCALE_URL=$THREE_SCALE_URL \
   -p AMQ_CRUD_NAMESPACE=$NS \
