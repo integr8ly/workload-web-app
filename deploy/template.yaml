@@ -8,7 +8,7 @@ objects:
     metadata:
       name: workload-web-app
     spec:
-      replicas: 1
+      replicas: 2
       selector:
         app: workload-web-app
         deploymentconfig: workload-web-app
@@ -36,15 +36,9 @@ objects:
                 - name: AMQ_CONSOLE_URL
                   value: ${AMQ_CONSOLE_URL}
                 - name: AMQ_CONSOLE_USER
-                  valueFrom:
-                    secretKeyRef:
-                      name: amq-console-secret
-                      key: AMQ_CONSOLE_USER
+                  value: asdf
                 - name: AMQ_CONSOLE_PWD
-                  valueFrom:
-                    secretKeyRef:
-                      name: amq-console-secret
-                      key: AMQ_CONSOLE_PWD
+                  value: asdf
                 - name: THREE_SCALE_URL
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
@@ -63,6 +57,13 @@ objects:
                     secretKeyRef:
                       name: rhsso-secret
                       key: RHSSO_PWD
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app: workload-web-app
           serviceAccountName: workload-web-app
           restartPolicy: Always
   - kind: Service
@@ -81,6 +82,15 @@ objects:
       selector:
         deploymentconfig: workload-web-app
       sessionAffinity: None
+  - kind: PodDisruptionBudget
+    apiVersion: policy/v1bbeta1
+    metadata:
+      name: workload-web-app-pdb
+    spec:
+      minAvailable: 2
+      selector:
+        matchLabels:
+          app: workload-web-app
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
