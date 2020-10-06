@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 NS=${NAMESPACE:-"workload-web-app"}
-AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
+if [[ -z "${RHOAM}" ]]; then
+  AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
+fi
 USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
 IMAGE="quay.io/integreatly/workload-web-app:master"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,36 +41,38 @@ if [[ ! -z "${RHMI_V1}" ]]; then
   oc delete networkpolicy --all -n $NS
 fi
 
-# Deploy AMQ Resorces
-echo "Creating required AMQ resources"
-if [[ ! -z "${RHMI_V1}" ]]; then
-  echo "Creating none-authservice in $AMQONLINE_NS"
-  oc apply -f $DIR/amq/auth.yaml -n $AMQONLINE_NS
-else
-  oc apply -f $DIR/amq/auth.yaml -n $NS
+if [[ -z "${RHOAM}" ]]; then
+  # Deploy AMQ Resorces
+  echo "Creating required AMQ resources"
+  if [[ ! -z "${RHMI_V1}" ]]; then
+    echo "Creating none-authservice in $AMQONLINE_NS"
+    oc apply -f $DIR/amq/auth.yaml -n $AMQONLINE_NS
+  else
+    oc apply -f $DIR/amq/auth.yaml -n $NS
+  fi
+
+  oc apply -f $DIR/amq/addressspace.yaml -n $NS
+  oc apply -f $DIR/amq/address.yaml -n $NS
+
+  echo "Waiting for AMQ AddressSpace to be ready"
+  # unfortunately oc wait doesn't work for addressspace and address types (problem with AMQ itself)
+  wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Addressspace is ready" "5m" "10"
+
+  echo "Waiting for AMQ AddressSpace serviceHost"
+  wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name==\"messaging\")].serviceHost}' | grep -q '.svc'" "Addressspace serviceHost is ready" "5m" "10"
+
+  echo "Waiting for AMQ Address to be ready"
+  wait_for "oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Address is ready" "5m" "10"
+
+  AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
+  AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
+
+  AMQ_CONSOLE_URL="https://$(oc get routes -l name=console -n $AMQONLINE_NS -o 'jsonpath={.items[].spec.host}')"
+  oc create secret generic amq-console-secret \
+    --from-literal=AMQ_CONSOLE_USER=${CUSTOMER_ADMIN} \
+    --from-literal=AMQ_CONSOLE_PWD=${CUSTOMER_ADMIN_PASSWORD} \
+    -n $NS
 fi
-
-oc apply -f $DIR/amq/addressspace.yaml -n $NS
-oc apply -f $DIR/amq/address.yaml -n $NS
-
-echo "Waiting for AMQ AddressSpace to be ready"
-# unfortunately oc wait doesn't work for addressspace and address types (problem with AMQ itself)
-wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Addressspace is ready" "5m" "10"
-
-echo "Waiting for AMQ AddressSpace serviceHost"
-wait_for "oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name==\"messaging\")].serviceHost}' | grep -q '.svc'" "Addressspace serviceHost is ready" "5m" "10"
-
-echo "Waiting for AMQ Address to be ready"
-wait_for "oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.status.isReady}' | grep -q 'true'" "Address is ready" "5m" "10"
-
-AMQ_ADDRESS="amqps://$(oc get addressspace/workload-app -n $NS -o 'jsonpath={.status.endpointStatuses[?(@.name=="messaging")].serviceHost}')"
-AMQ_QUEUE="/$(oc get address/workload-app.queue-requests -n $NS -o 'jsonpath={.spec.address}')"
-
-AMQ_CONSOLE_URL="https://$(oc get routes -l name=console -n $AMQONLINE_NS -o 'jsonpath={.items[].spec.host}')"
-oc create secret generic amq-console-secret \
-  --from-literal=AMQ_CONSOLE_USER=${CUSTOMER_ADMIN} \
-  --from-literal=AMQ_CONSOLE_PWD=${CUSTOMER_ADMIN_PASSWORD} \
-  -n $NS
 
 #SSO credentials
 if [[ ! -z "${RHMI_V1}" ]]; then
@@ -90,22 +94,32 @@ echo "Waiting for the ${THREE_SCALE_URL} to be reachable"
 wait_for "curl -s -o /dev/null -w '%{http_code}' ${THREE_SCALE_URL} | grep 200" "3SCALE API to be reachable" "10m" "10"
 
 # Deploy the Workload App
-echo "Deploying the webapp with the following parameters:"
-echo "AMQ_ADDRESS=$AMQ_ADDRESS"
-echo "AMQ_QUEUE=$AMQ_QUEUE"
-echo "AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL"
-echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
-echo "THREE_SCALE_URL=$THREE_SCALE_URL"
-oc process -n $NS -f $DIR/template.yaml \
-  -p AMQ_ADDRESS=$AMQ_ADDRESS \
-  -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
-  -p AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL \
-  -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
-  -p THREE_SCALE_URL=$THREE_SCALE_URL \
-  -p AMQ_CRUD_NAMESPACE=$NS \
-  -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
-  oc apply -n $NS -f -
-
+if [[ ! -z "${RHOAM}" ]]; then
+  echo "Deploying the webapp with the following parameters:"
+  echo "AMQ_ADDRESS=$AMQ_ADDRESS"
+  echo "AMQ_QUEUE=$AMQ_QUEUE"
+  echo "AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL"
+  echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
+  echo "THREE_SCALE_URL=$THREE_SCALE_URL"
+  oc process -n $NS -f $DIR/template.yaml \
+    -p AMQ_ADDRESS=$AMQ_ADDRESS \
+    -p AMQ_QUEUE_NAME=$AMQ_QUEUE \
+    -p AMQ_CONSOLE_URL=$AMQ_CONSOLE_URL \
+    -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
+    -p THREE_SCALE_URL=$THREE_SCALE_URL \
+    -p AMQ_CRUD_NAMESPACE=$NS \
+    -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
+    oc apply -n $NS -f -
+else
+  echo "Deploying the webapp with the following parameters:"
+  echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
+  echo "THREE_SCALE_URL=$THREE_SCALE_URL"
+  oc process -n $NS -f $DIR/template.yaml \
+    -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
+    -p THREE_SCALE_URL=$THREE_SCALE_URL \
+    -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
+    oc apply -n $NS -f -
+fi
 echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
 oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
