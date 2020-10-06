@@ -94,7 +94,7 @@ echo "Waiting for the ${THREE_SCALE_URL} to be reachable"
 wait_for "curl -s -o /dev/null -w '%{http_code}' ${THREE_SCALE_URL} | grep 200" "3SCALE API to be reachable" "10m" "10"
 
 # Deploy the Workload App
-if [[ ! -z "${RHOAM}" ]]; then
+if [[ -z "${RHOAM}" ]]; then
   echo "Deploying the webapp with the following parameters:"
   echo "AMQ_ADDRESS=$AMQ_ADDRESS"
   echo "AMQ_QUEUE=$AMQ_QUEUE"
