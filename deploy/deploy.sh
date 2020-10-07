@@ -114,7 +114,7 @@ else
   echo "Deploying the webapp with the following parameters:"
   echo "RHSSO_SERVER_URL=$RHSSO_SERVER_URL"
   echo "THREE_SCALE_URL=$THREE_SCALE_URL"
-  oc process -n $NS -f $DIR/template.yaml \
+  oc process -n $NS -f $DIR/template-rhoam.yaml \
     -p RHSSO_SERVER_URL=$RHSSO_SERVER_URL \
     -p THREE_SCALE_URL=$THREE_SCALE_URL \
     -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
