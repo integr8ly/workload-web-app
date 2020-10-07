@@ -36,15 +36,9 @@ objects:
                 - name: AMQ_CONSOLE_URL
                   value: ${AMQ_CONSOLE_URL}
                 - name: AMQ_CONSOLE_USER
-                  valueFrom:
-                    secretKeyRef:
-                      name: amq-console-secret
-                      key: AMQ_CONSOLE_USER
+                  value: asdf
                 - name: AMQ_CONSOLE_PWD
-                  valueFrom:
-                    secretKeyRef:
-                      name: amq-console-secret
-                      key: AMQ_CONSOLE_PWD
+                  value: asdf
                 - name: THREE_SCALE_URL
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
@@ -93,7 +87,7 @@ objects:
     metadata:
       name: workload-web-app-pdb
     spec:
-      minAvailable: 2
+      minAvailable: 1
       selector:
         matchLabels:
           app: workload-web-app
