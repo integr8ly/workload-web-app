@@ -8,7 +8,7 @@ objects:
     metadata:
       name: workload-web-app
     spec:
-      replicas: 2
+      replicas: 1
       selector:
         app: workload-web-app
         deploymentconfig: workload-web-app
@@ -93,7 +93,7 @@ objects:
     metadata:
       name: workload-web-app-pdb
     spec:
-      minAvailable: 2
+      minAvailable: 1
       selector:
         matchLabels:
           app: workload-web-app
