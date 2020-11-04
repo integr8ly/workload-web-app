@@ -3,6 +3,7 @@ NAMESPACE=workload-web-app
 CONTAINER_ENGINE=docker
 TOOLS_IMAGE=quay.io/integreatly/workload-web-app-tools
 WORKLOAD_WEB_APP_IMAGE?= # Alternative image 
+KUBECONFIG?=${HOME}/.kube/config
 
 in_container = ${CONTAINER_ENGINE} run --rm -it \
 	-e KUBECONFIG=/kube.config \
@@ -13,7 +14,7 @@ in_container = ${CONTAINER_ENGINE} run --rm -it \
 	-e THREESCALE_NAMESPACE=${THREESCALE_NAMESPACE} \
 	-e AMQONLINE_NAMESPACE=${AMQONLINE_NAMESPACE} \
 	-e WORKLOAD_WEB_APP_IMAGE=${WORKLOAD_WEB_APP_IMAGE} \
-	-v "${HOME}/.kube/config":/kube.config:z \
+	-v ${KUBECONFIG}:/kube.config:z \
 	-v "${PWD}":/workload-web-app \
 	-w /workload-web-app \
 	${TOOLS_IMAGE} make $(1)
