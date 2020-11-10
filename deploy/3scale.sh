@@ -5,7 +5,11 @@ set -euo pipefail
 SCRIPT="3scale.sh"
 TOKEN=
 API_URL=
-NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhmi-3scale"}
+if [[ -z "${RHOAM}" ]]; then
+  NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhmi-3scale"}
+else
+  NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhoam-3scale"}
+fi
 
 function log() {
     # always log to stderr to avoid interfiring with the stdout
