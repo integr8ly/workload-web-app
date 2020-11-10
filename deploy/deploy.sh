@@ -3,8 +3,10 @@
 NS=${NAMESPACE:-"workload-web-app"}
 if [[ -z "${RHOAM}" ]]; then
   AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
+  USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
+else
+  USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoam-user-sso"}
 fi
-USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
 IMAGE="quay.io/integreatly/workload-web-app:master"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CUSTOMER_ADMIN="customer-admin01"
