@@ -42,7 +42,7 @@ func init() {
 		log.SetLevel(log.DebugLevel)
 	}
 	if os.Getenv(envVarRequestInterval) != "" {
-		if val, err := strconv.Atoi(os.Getenv(envVarRequestInterval)); err != nil {
+		if val, err := strconv.Atoi(os.Getenv(envVarRequestInterval)); err == nil {
 			counters.RequestInterval = time.Duration(val) * time.Second
 		}
 	}
