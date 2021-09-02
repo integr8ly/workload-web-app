@@ -54,7 +54,10 @@ To deploy the app to a RHOAM cluster, you will need to:
 
 ## Delete the app
 
-To delete the app, run
+To delete the app, run:
+```
+make local/undeploy
+```
 
-> ```make local/undeploy```
+Note: It might take up to 15 minutes for 3scale to fully remove the service (Product) hence you need to wait this long after undeploy if you want to deploy the workload-web-app again. In case the service is not fully removed yet the deployment fails with `System name has already been taken` error.
 
