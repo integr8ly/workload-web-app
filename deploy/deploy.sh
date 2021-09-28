@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+OBSERVABILITY_NS="redhat-rhoam-observability"
 NS=${NAMESPACE:-"workload-web-app"}
 if [[ -z "${RHOAM}" ]]; then
   AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
@@ -136,8 +137,8 @@ oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120
 if [[ ! -z "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
   if [[ -z "${RHOAM}" ]]; then
-    oc apply -n $NS -f $DIR/dashboard.yaml
+    oc apply -n $OBSERVABILITY_NS -f $DIR/dashboard.yaml
   else
-    oc apply -n $NS -f $DIR/dashboard-rhoam.yaml
+    oc apply -n $OBSERVABILITY_NS -f $DIR/dashboard-rhoam.yaml
   fi
 fi
