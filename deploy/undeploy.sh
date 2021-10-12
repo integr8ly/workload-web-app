@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+OBSERVABILITY_NS="redhat-rhoam-observability"
 NS=${NAMESPACE:-"workload-web-app"}
 if [[ -z "${RHOAM}" ]]; then
   AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
@@ -8,6 +9,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Clean the Workload App
 oc delete all -l app=workload-web-app -n $NS
+oc delete grafanadashboards.integreatly.org workload-web-app -n $OBSERVABILITY_NS
 
 # if RHOAM flag passed ignore amq
 if [[ -z "${RHOAM}" ]]; then
