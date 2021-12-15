@@ -19,6 +19,21 @@ objects:
             deploymentconfig: workload-web-app
           annotations:
         spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app: workload-web-app
+                  topologyKey: topology.kubernetes.io/zone
+                weight: 100
+              - podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app: workload-web-app
+                  topologyKey: kubernetes.io/hostname
+                weight: 100
           containers:
             - name: workload-web-app
               image: ${WORKLOAD_WEB_APP_IMAGE}
