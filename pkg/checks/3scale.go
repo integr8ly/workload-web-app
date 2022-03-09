@@ -23,6 +23,9 @@ func (t *ThreeScaleChecks) RunForever() {
 	tr := &http.Transport{TLSClientConfig: tc}
 	client := &http.Client{Transport: tr}
 
+	// Ensure the 3scale app is stabilized
+	t.healthCheck(client)
+
 	counters.InitCounters(threeScaleService, t.URL)
 
 	// Start make requests
@@ -47,4 +50,26 @@ func (t *ThreeScaleChecks) makeRequests(client *http.Client) {
 		// Wait intervall
 		time.Sleep(t.Interval)
 	}
+}
+
+func (t *ThreeScaleChecks) healthCheck(client *http.Client) {
+	count := 0
+	log.Info("Starting 3scale health check")
+	for count < 10 {
+		// Make Request
+		r, err := http.Get(t.URL)
+		if err != nil {
+			count = 0
+			log.Warnf("3scale health check: request failed with error: %v", err)
+		} else if r.StatusCode != http.StatusOK {
+			count = 0
+			log.Warnf("3scale health check: request failed with status code: %d", r.StatusCode)
+		} else {
+			count++
+		}
+
+		// Wait interval
+		time.Sleep(t.Interval)
+	}
+	log.Info("3scale health check passed")
 }
