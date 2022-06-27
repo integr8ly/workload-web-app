@@ -98,7 +98,7 @@ objects:
         deploymentconfig: workload-web-app
       sessionAffinity: None
   - kind: PodDisruptionBudget
-    apiVersion: policy/v1beta1
+    apiVersion: policy/v1
     metadata:
       name: workload-web-app-pdb
     spec:
