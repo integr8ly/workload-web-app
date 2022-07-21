@@ -8,7 +8,11 @@ API_URL=
 if [[ -z "${RHOAM}" ]]; then
   NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhmi-3scale"}
 else
-  NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhoam-3scale"}
+  if [[ -z "${SANDBOX:-}" ]]; then
+    NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhoam-3scale"}
+  else
+    NAMESPACE=${THREESCALE_NAMESPACE:-"sandbox-rhoam-3scale"}
+  fi
 fi
 
 function log() {

@@ -44,12 +44,17 @@ To deploy the app to a RHOAM cluster, you will need to:
 1. Login to the RHOAM cluster using ` oc login ` command
 2. Set the following environment variables:
    ```bash
+   # Mandatory env var. If not set, assuming it is false - deploying for RHMI installation type. 
    export RHOAM=true
+   
    # This env var is optional. Only set it if you want to view the metrics data using the Grafana dashboard
    export GRAFANA_DASHBOARD=true
-
    ```
-3. Then run this command to deploy the app:
+3. Sandbox RHOAM only. Export an additional envar to switch web-app into a multitenant-managed-api compliant mode: 
+   ```bash
+   export SANDBOX=true
+   ```
+4. Then run this command to deploy the app:
    ```make local/deploy```
 
 ## Delete the app
