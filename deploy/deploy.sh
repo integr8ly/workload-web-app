@@ -4,16 +4,21 @@ OBSERVABILITY_NS="redhat-rhoam-observability"
 NS=${NAMESPACE:-"workload-web-app"}
 if [[ -z "${RHOAM}" ]]; then
   AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
-  USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
+  SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhmi-user-sso"}
 else
-  USERSSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoam-user-sso"}
+  if [[ -z "${SANDBOX}" ]]; then
+    SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoam-user-sso"}
+  else
+    SSO_NS=${USERSSO_NAMESPACE:-"sandbox-rhoam-rhsso"}
+    OBSERVABILITY_NS="sandbox-rhoam-observability"
+  fi
 fi
 IMAGE="quay.io/integreatly/workload-web-app:master"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CUSTOMER_ADMIN="customer-admin01"
 CUSTOMER_ADMIN_PASSWORD="Password1"
 
-if [[ ! -z "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
+if [[ -n "${WORKLOAD_WEB_APP_IMAGE}" ]]; then
   echo "Attention: using alternative image: ${WORKLOAD_WEB_APP_IMAGE}"
   IMAGE=${WORKLOAD_WEB_APP_IMAGE}
 fi
@@ -38,7 +43,7 @@ wait_for() {
 oc new-project $NS
 oc label namespace $NS monitoring-key=middleware integreatly-middleware-service=true
 
-if [[ ! -z "${RHMI_V1}" ]]; then
+if [[ -n "${RHMI_V1}" ]]; then
   echo "Delete all network policies"
   sleep 5
   oc delete networkpolicy --all -n $NS
@@ -47,7 +52,7 @@ fi
 if [[ -z "${RHOAM}" ]]; then
   # Deploy AMQ Resorces
   echo "Creating required AMQ resources"
-  if [[ ! -z "${RHMI_V1}" ]]; then
+  if [[ -n "${RHMI_V1}" ]]; then
     echo "Creating none-authservice in $AMQONLINE_NS"
     oc apply -f $DIR/amq/auth.yaml -n $AMQONLINE_NS
   else
@@ -78,21 +83,26 @@ if [[ -z "${RHOAM}" ]]; then
 fi
 
 #SSO credentials
-if [[ ! -z "${RHMI_V1}" ]]; then
-  RHSSO_SERVER_URL="https://$(oc get routes -n $USERSSO_NS sso -o 'jsonpath={.spec.host}')"
-  RHSSO_USER="$(oc get secret -n $USERSSO_NS credential-rhsso -o 'jsonpath={.data.SSO_ADMIN_USERNAME}' | base64 --decode)"
-  RHSSO_PWD="$(oc get secret -n $USERSSO_NS credential-rhsso -o 'jsonpath={.data.SSO_ADMIN_PASSWORD}'| base64 --decode)"
+if [[ -n "${RHMI_V1}" ]]; then
+  RHSSO_SERVER_URL="https://$(oc get routes -n $SSO_NS sso -o 'jsonpath={.spec.host}')"
+  RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhsso -o 'jsonpath={.data.SSO_ADMIN_USERNAME}' | base64 --decode)"
+  RHSSO_PWD="$(oc get secret -n $SSO_NS credential-rhsso -o 'jsonpath={.data.SSO_ADMIN_PASSWORD}'| base64 --decode)"
 else
-  RHSSO_SERVER_URL=$(oc get routes -n "$USERSSO_NS" keycloak-edge -o 'jsonpath={.spec.host}')
+  RHSSO_SERVER_URL=$(oc get routes -n $SSO_NS keycloak-edge -o 'jsonpath={.spec.host}')
   # Following condition was added due to deprecation of keycloak-edge route
   # see https://issues.redhat.com/browse/MGDAPI-1079 for more details
   if [ -z "$RHSSO_SERVER_URL" ]; then
     echo 'Ignoring missing "keycloak-edge" route and using route "keycloak" instead'
-    RHSSO_SERVER_URL=$(oc get routes -n "$USERSSO_NS" keycloak -o 'jsonpath={.spec.host}')
+    RHSSO_SERVER_URL=$(oc get routes -n $SSO_NS keycloak -o 'jsonpath={.spec.host}')
   fi
   RHSSO_SERVER_URL="https://$RHSSO_SERVER_URL"
-  RHSSO_USER="$(oc get secret -n $USERSSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
-  RHSSO_PWD="$(oc get secret -n $USERSSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+  if [[ -z "${SANDBOX}" ]]; then
+    RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
+    RHSSO_PWD="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+  else
+    RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhsso -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
+    RHSSO_PWD="$(oc get secret -n $SSO_NS credential-rhsso -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+  fi
 fi
 
 #Create rhsso secret
@@ -134,7 +144,7 @@ echo "Waiting for pod to be ready"
 sleep 5 #give it a bit time to create the pods
 oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
 
-if [[ ! -z "${GRAFANA_DASHBOARD}" ]]; then
+if [[ -n "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
   if [[ -z "${RHOAM}" ]]; then
     oc apply -n $NS -f $DIR/dashboard.yaml

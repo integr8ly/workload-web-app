@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 OBSERVABILITY_NS="redhat-rhoam-observability"
+if [[ -n "${SANDBOX}" ]]; then
+    OBSERVABILITY_NS="sandbox-rhoam-observability"
+fi
+
 NS=${NAMESPACE:-"workload-web-app"}
 if [[ -z "${RHOAM}" ]]; then
   AMQONLINE_NS=${AMQONLINE_NAMESPACE:-"redhat-rhmi-amq-online"}
