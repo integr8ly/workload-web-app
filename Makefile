@@ -1,6 +1,7 @@
 BUILD_TARGET=workload-app
 NAMESPACE=workload-web-app
 CONTAINER_ENGINE=docker
+CONTAINER_PLATFORM ?= linux/amd64
 TOOLS_IMAGE=quay.io/integreatly/workload-web-app-tools
 WORKLOAD_WEB_APP_IMAGE?= # Alternative image 
 KUBECONFIG?=${HOME}/.kube/config
@@ -26,7 +27,7 @@ test:
 
 .PHONY: image/build/tools
 image/build/tools:
-	${CONTAINER_ENGINE} build -t ${TOOLS_IMAGE} -f Dockerfile.tools .
+	${CONTAINER_ENGINE} build --platform=$(CONTAINER_PLATFORM) -t ${TOOLS_IMAGE} -f Dockerfile.tools .
 
 local/deploy: image/build/tools
 	$(call in_container,deploy)
@@ -35,7 +36,7 @@ local/undeploy: image/build/tools
 	$(call in_container,undeploy)
 
 local/build-deploy:
-	${CONTAINER_ENGINE} build -t ${WORKLOAD_WEB_APP_IMAGE} .
+	${CONTAINER_ENGINE} build --platform=$(CONTAINER_PLATFORM) -t ${WORKLOAD_WEB_APP_IMAGE} .
 	${CONTAINER_ENGINE} push ${WORKLOAD_WEB_APP_IMAGE}
 	$(call in_container,deploy)
 
