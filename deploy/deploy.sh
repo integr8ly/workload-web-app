@@ -140,9 +140,24 @@ else
     -p WORKLOAD_WEB_APP_IMAGE=$IMAGE |
     oc apply -n $NS -f -
 fi
-echo "Waiting for pod to be ready"
+echo "Waiting for pods to be ready"
 sleep 5 #give it a bit time to create the pods
 oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
+status=$?
+
+# Ugly hack to start rollout again if pods did not get ready
+if [[ $status -ne 0 ]]; then
+  oc rollout cancel dc/workload-web-app -n workload-web-app
+  sleep 5 #give it a bit time to cancel
+  oc rollout latest dc/workload-web-app -n workload-web-app
+  sleep 5 #give it a bit time to create the pods
+  oc wait -n $NS --for="condition=Ready" pod -l app=workload-web-app --timeout=120s
+  status=$?
+fi
+
+if [[ $status -ne 0 ]]; then
+  exit $status
+fi
 
 if [[ -n "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
