@@ -5,14 +5,10 @@ set -euo pipefail
 SCRIPT="3scale.sh"
 TOKEN=
 API_URL=
-if [[ -z "${RHOAM}" ]]; then
-  NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhmi-3scale"}
+if [[ -z "${SANDBOX:-}" ]]; then
+  NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhoam-3scale"}
 else
-  if [[ -z "${SANDBOX:-}" ]]; then
-    NAMESPACE=${THREESCALE_NAMESPACE:-"redhat-rhoam-3scale"}
-  else
-    NAMESPACE=${THREESCALE_NAMESPACE:-"sandbox-rhoam-3scale"}
-  fi
+  NAMESPACE=${THREESCALE_NAMESPACE:-"sandbox-rhoam-3scale"}
 fi
 
 function log() {
