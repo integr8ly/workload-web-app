@@ -17,19 +17,13 @@ import (
 )
 
 const (
-	evnVarPort               = "PORT"
-	envVarAMQAddress         = "AMQ_ADDRESS"
-	envVarAMQQueue           = "AMQ_QUEUE"
-	envVarEnvironment        = "ENVIRONMENT"
-	envVarRequestInterval    = "REQUEST_INTERVAL"
-	envVarURL                = "RHSSO_SERVER_URL"
-	envVarUser               = "RHSSO_USER"
-	envVarPassword           = "RHSSO_PWD"
-	envVarThreeScaleURL      = "THREE_SCALE_URL"
-	envVarAMQCRUDNamespace   = "AMQ_CRUD_NAMESPACE"
-	envVarAMQConsoleURL      = "AMQ_CONSOLE_URL"
-	envVarAMQConsoleUsername = "AMQ_CONSOLE_USER"
-	envVarAMQConsolePassword = "AMQ_CONSOLE_PWD"
+	evnVarPort            = "PORT"
+	envVarEnvironment     = "ENVIRONMENT"
+	envVarRequestInterval = "REQUEST_INTERVAL"
+	envVarURL             = "RHSSO_SERVER_URL"
+	envVarUser            = "RHSSO_USER"
+	envVarPassword        = "RHSSO_PWD"
+	envVarThreeScaleURL   = "THREE_SCALE_URL"
 
 	productionEnv = "production"
 )
@@ -54,64 +48,6 @@ func init() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
-}
-
-func startAMQChecks() {
-	addr := os.Getenv(envVarAMQAddress)
-	q := os.Getenv(envVarAMQQueue)
-	if addr != "" && q != "" {
-		log.WithFields(log.Fields{
-			"address":  addr,
-			"queue":    q,
-			"interval": counters.RequestInterval,
-		}).Info("Start AMQ checks")
-		c := &checks.AMQChecks{
-			Address:     addr,
-			QueueName:   q,
-			SendTimeout: 2 * time.Second,
-			Interval:    counters.RequestInterval,
-		}
-		c.RunForever()
-	} else {
-		log.Warnf("AMQ Checks are not started as env vars %s, %s are not set", envVarAMQAddress, envVarAMQQueue)
-	}
-}
-
-func startAMQConsoleChecks() {
-	console := os.Getenv(envVarAMQConsoleURL)
-	username := os.Getenv(envVarAMQConsoleUsername)
-	password := os.Getenv(envVarAMQConsolePassword)
-	if console != "" && username != "" && password != "" {
-		log.WithFields(log.Fields{
-			"consoleURL": console,
-			"interval":   counters.RequestInterval,
-		}).Info("Start AMQ Console checks")
-		c := &checks.AMQConsoleChecks{
-			ConsoleURL: console,
-			Username:   username,
-			Password:   password,
-			Interval:   counters.RequestInterval,
-		}
-		c.RunForever()
-	} else {
-		log.Warnf("AMQ Console checks are not started as env vars %s, %s, %s are not set correctly!",
-			envVarAMQConsoleURL, envVarAMQConsoleUsername, envVarAMQConsolePassword)
-	}
-}
-func startAMQCRUDChecks() {
-	namespace := os.Getenv(envVarAMQCRUDNamespace)
-	if namespace != "" {
-		log.Info("Start AMQ CRUD checks")
-		c, err := checks.NewAMQCRUDChecks(namespace)
-		if err != nil {
-			log.Warnf("Failed to start AMQ CRUD Checks with error: %s", err)
-			return
-		}
-
-		c.RunForever()
-	} else {
-		log.Warnf("AMQ CRUD Checks are not started as env var %s is not set", envVarAMQCRUDNamespace)
-	}
 }
 
 func startSSOChecks() {
@@ -156,11 +92,8 @@ func startThreeScaleChecks() {
 }
 
 func main() {
-	go startAMQChecks()
-	go startAMQConsoleChecks()
 	go startSSOChecks()
 	go startThreeScaleChecks()
-	go startAMQCRUDChecks()
 	startHttpServer()
 }
 

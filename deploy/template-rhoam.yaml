@@ -44,22 +44,10 @@ objects:
               env:
                 - name: PORT
                   value: ${PORT}
-                - name: AMQ_ADDRESS
-                  value: ${AMQ_ADDRESS}
-                - name: AMQ_QUEUE
-                  value: ${AMQ_QUEUE_NAME}
-                - name: AMQ_CONSOLE_URL
-                  value: ${AMQ_CONSOLE_URL}
-                - name: AMQ_CONSOLE_USER
-                  value: asdf
-                - name: AMQ_CONSOLE_PWD
-                  value: asdf
                 - name: THREE_SCALE_URL
                   value: ${THREE_SCALE_URL}
                 - name: ENVIRONMENT
                   value: production
-                - name: AMQ_CRUD_NAMESPACE
-                  value: ${AMQ_CRUD_NAMESPACE}
                 - name: RHSSO_SERVER_URL
                   value: ${RHSSO_SERVER_URL}
                 - name: RHSSO_USER
@@ -203,16 +191,6 @@ parameters:
   - name: PORT
     description: Port number
     value: "8080"
-  - name: AMQ_ADDRESS
-    description: The URL to connect to an AMQ address
-  - name: AMQ_QUEUE_NAME
-    description: The queue name to use for the AMQ address
-  - name: AMQ_CONSOLE_URL
-    description: The AMQ console URL for testing the console
-  - name: AMQ_CONSOLE_USER
-    description: The RHMI user to login to AMQ console
-  - name: AMQ_CONSOLE_PWD
-    description: The password for the RHMI user to login to AMQ console
   - name: RHSSO_SERVER_URL
     description: The RHSSO Server URL
   - name: RHSSO_USER
@@ -221,5 +199,3 @@ parameters:
     description: The Password for RHSSO login
   - name: THREE_SCALE_URL
     description: The API URL protected by 3scale
-  - name: AMQ_CRUD_NAMESPACE
-    description: The namespace were to create AMQ AddressSpaces and Addresses
