@@ -1,12 +1,13 @@
-BUILD_TARGET=workload-app
-NAMESPACE=workload-web-app
-CONTAINER_ENGINE=docker
-CONTAINER_PLATFORM ?= linux/amd64
-TOOLS_IMAGE=quay.io/integreatly/workload-web-app-tools
+BUILD_TARGET?=workload-app
+NAMESPACE?=workload-web-app
+CONTAINER_ENGINE?=docker
+CONTAINER_PLATFORM?=linux/amd64
+TOOLS_IMAGE?=quay.io/integreatly/workload-web-app-tools
 WORKLOAD_WEB_APP_IMAGE?= # Alternative image 
 KUBECONFIG?=${HOME}/.kube/config
+ADDITIONAL_CONTAINER_ENGINE_PARAMS?=
 
-in_container = ${CONTAINER_ENGINE} run --rm -it \
+in_container = ${CONTAINER_ENGINE} run --rm -it ${ADDITIONAL_CONTAINER_ENGINE_PARAMS} \
 	-e KUBECONFIG=/kube.config \
 	-e SANDBOX=${SANDBOX} \
 	-e GRAFANA_DASHBOARD=${GRAFANA_DASHBOARD} \
