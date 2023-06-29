@@ -3,7 +3,7 @@ kind: GrafanaDashboard
 metadata:
   name: workload-web-app
   labels:
-    monitoring-key: middleware
+    monitoring-key: customer
 spec:
   json: |
     {
