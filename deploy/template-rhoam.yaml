@@ -120,7 +120,7 @@ objects:
       kind: Role
       apiGroup: rbac.authorization.k8s.io
       name: workload-web-app
-  - apiVersion: monitoring.coreos.com/v1
+  - apiVersion: monitoring.rhobs/v1
     kind: ServiceMonitor
     metadata:
       name: workload-web-app
