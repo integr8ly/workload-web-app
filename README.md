@@ -26,3 +26,11 @@ make local/undeploy
 
 Note: It might take up to 15 minutes for 3scale to fully remove the service (Product) hence you need to wait this long after undeploy if you want to deploy the workload-web-app again. In case the service is not fully removed yet the deployment fails with `System name has already been taken` error.
 
+## Troubleshooting
+
+In case of `make: stat: Makefile: Permission denied` error try to use privileged:
+
+```
+ADDITIONAL_CONTAINER_ENGINE_PARAMS="--privileged" CONTAINER_ENGINE=podman make local/deploy
+```
+
