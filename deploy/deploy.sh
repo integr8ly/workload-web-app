@@ -95,5 +95,9 @@ fi
 
 if [[ -n "${GRAFANA_DASHBOARD}" ]]; then
   echo "Creating Grafana Dashboard for the app"
-  oc apply -n $OBSERVABILITY_NS -f $DIR/dashboard-rhoam.yaml
+  GRAFANA_ADMIN="$(oc get secret -n $OBSERVABILITY_NS grafana-admin-credentials -o 'jsonpath={.data.GF_SECURITY_ADMIN_USER}'| base64 --decode)"
+  GRAFANA_ADMIN_PASSWORD="$(oc get secret -n $OBSERVABILITY_NS grafana-admin-credentials -o 'jsonpath={.data.GF_SECURITY_ADMIN_PASSWORD}'| base64 --decode)"
+  WORKLOAD_WEB_APP_POD_NAME="$(oc get po --namespace=$NS | grep Running | head -1 | awk '{print $1}')"
+  GRAFANA_SVC="$(oc get svc --namespace=$OBSERVABILITY_NS | grep grafana-service | awk '{print $3}')"
+  oc exec -it $WORKLOAD_WEB_APP_POD_NAME -- /bin/sh -c 'wget -O - --header="Accept: application/json" --header="Content-Type: application/json" --post-file=- http://'$GRAFANA_ADMIN':'$GRAFANA_ADMIN_PASSWORD'@'$GRAFANA_SVC':3000/api/dashboards/db' < $DIR/dashboard-rhoam.json
 fi

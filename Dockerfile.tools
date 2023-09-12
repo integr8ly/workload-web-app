@@ -5,7 +5,7 @@ RUN update-ca-trust extract
 
 RUN yum -y install make jq perl-XML-XPath
 
-ENV OC_VERSION="4.12.29"
+ENV OC_VERSION="4.12.31"
 RUN curl -Ls https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/$OC_VERSION/openshift-client-linux.tar.gz | tar -zx && \
     mv oc /usr/local/bin
 
