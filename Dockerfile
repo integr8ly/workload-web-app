@@ -16,6 +16,7 @@ RUN make build
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add curl
 WORKDIR /root/
 COPY --from=builder /workload-web-app/workload-app .
 EXPOSE 8080
