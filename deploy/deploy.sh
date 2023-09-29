@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-OBSERVABILITY_NS="redhat-rhoam-customer-monitoring-operator"
+OBSERVABILITY_NS="redhat-rhoam-customer-monitoring"
 NS=${NAMESPACE:-"workload-web-app"}
 
 if [[ -z "${SANDBOX}" ]]; then
   SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoam-user-sso"}
 else
   SSO_NS=${USERSSO_NAMESPACE:-"sandbox-rhoam-rhsso"}
-  OBSERVABILITY_NS="sandbox-rhoam-customer-monitoring-operator"
+  OBSERVABILITY_NS="sandbox-rhoam-customer-monitoring"
 fi
 
 IMAGE="quay.io/integreatly/workload-web-app:master"
