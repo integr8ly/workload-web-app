@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-OBSERVABILITY_NS="redhat-rhoam-customer-monitoring"
+OBSERVABILITY_NS="redhat-rhoam-customer-monitoring-operator"
 if [[ -n "${SANDBOX}" ]]; then
-    OBSERVABILITY_NS="sandbox-rhoam-customer-monitoring"
+    OBSERVABILITY_NS="sandbox-rhoam-customer-monitoring-operator"
 fi
 
 NS=${NAMESPACE:-"workload-web-app"}
