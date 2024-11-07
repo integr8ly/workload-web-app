@@ -3,7 +3,7 @@ FROM registry.redhat.io/ubi9/ubi:9.4
 COPY resources/rhit-root-ca.crt /etc/pki/ca-trust/source/anchors/
 RUN update-ca-trust extract
 
-RUN dnf install -y make gcc xmlstarlet && \
+RUN dnf install -y make gcc && \
     dnf clean all
 
 ENV OC_VERSION="4.17.2"
@@ -13,7 +13,3 @@ RUN curl -Ls https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/$O
 ENV JQ_VERSION="1.7.1"
 RUN curl -Lo /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64 && \
     chmod +x /usr/local/bin/jq
-
-# Allow XPath query evaluation using 'xpath' command
-# Note that -e BASH_ENV /etc/profile.d/xpath_func.sh needs to be used when running the container
-RUN echo "xpath() { xmlstarlet sel -t -v \"\$@\"; }" > /etc/profile.d/xpath_func.sh
