@@ -1,6 +1,6 @@
 # Start from the latest golang base image.
 # We use multi-stage build here to reduce the size of the final image
-FROM golang:latest AS builder
+FROM mirror.gcr.io/library/golang:latest AS builder
 # Add Maintainer Info
 LABEL maintainer="Stephin Thomas"
 # Set the Current Working Directory inside the container
@@ -14,7 +14,7 @@ COPY . .
 # Build the Go app
 RUN make build
 
-FROM alpine:latest
+FROM mirror.gcr.io/library/alpine:latest
 RUN apk --no-cache add ca-certificates
 RUN apk --no-cache add curl
 WORKDIR /root/
