@@ -6,7 +6,7 @@ NS=${NAMESPACE:-"workload-web-app"}
 if [[ -z "${RHOAMI}" ]]; then
   SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoam-user-sso"}
 else
-  SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoami-rhsso"}
+  SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoami-user-sso"}
   OBSERVABILITY_NS="redhat-rhoami-customer-monitoring"
 fi
 
@@ -53,8 +53,8 @@ if [[ -z "${RHOAMI}" ]]; then
   RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
   RHSSO_PWD="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
 else
-  RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhsso -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
-  HSSO_PWD="$(oc get secret -n $SSO_NS credential-rhsso -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
+  RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
+  RHSSO_PWD="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
 fi
 
 #Create rhsso secret
