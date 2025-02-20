@@ -3,11 +3,11 @@
 OBSERVABILITY_NS="redhat-rhoam-customer-monitoring"
 NS=${NAMESPACE:-"workload-web-app"}
 
-if [[ -z "${SANDBOX}" ]]; then
+if [[ -z "${RHOAMI}" ]]; then
   SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoam-user-sso"}
 else
-  SSO_NS=${USERSSO_NAMESPACE:-"sandbox-rhoam-rhsso"}
-  OBSERVABILITY_NS="sandbox-rhoam-customer-monitoring"
+  SSO_NS=${USERSSO_NAMESPACE:-"redhat-rhoami-rhsso"}
+  OBSERVABILITY_NS="redhat-rhoami-customer-monitoring"
 fi
 
 IMAGE="quay.io/integreatly/workload-web-app:master"
@@ -49,7 +49,7 @@ if [ -z "$RHSSO_SERVER_URL" ]; then
   RHSSO_SERVER_URL=$(oc get routes -n $SSO_NS keycloak -o 'jsonpath={.spec.host}')
 fi
 RHSSO_SERVER_URL="https://$RHSSO_SERVER_URL"
-if [[ -z "${SANDBOX}" ]]; then
+if [[ -z "${RHOAMI}" ]]; then
   RHSSO_USER="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_USERNAME}' | base64 --decode)"
   RHSSO_PWD="$(oc get secret -n $SSO_NS credential-rhssouser -o 'jsonpath={.data.ADMIN_PASSWORD}'| base64 --decode)"
 else
