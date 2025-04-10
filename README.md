@@ -10,9 +10,9 @@ To deploy the app to a RHOAM cluster, you will need to:
    ```bash
    export GRAFANA_DASHBOARD=true
    ```
-3. Sandbox RHOAM only. Export an additional envar to switch web-app into a multitenant-managed-api compliant mode: 
+3. Internal RHOAMI only. Export an additional envar to switch web-app into a Internal/edge compliant mode: 
    ```bash
-   export SANDBOX=true
+   export RHOAMI=true
    ```
 4. Then run this command to deploy the app:
    ```make local/deploy```
