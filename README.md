@@ -88,6 +88,11 @@ Note: It might take up to 15 minutes for 3scale to fully remove the service (Pro
    # Force Podman even if Docker is available
    CONTAINER_ENGINE=podman make local/deploy
    ```
+5. **Missing Grafana dashboard**
+   If the Grafana dashboard is missing it can be readded with the following one line command 
+   ```bash
+   oc exec -it $(oc get po -n workload-web-app | grep Running | head -1 | awk '{print $1}') -n workload-web-app -- /bin/sh -c 'wget -O - --header="Accept: application/json" --header="Content-Type: application/json"  --post-file=- http://'"$(oc get secret -n redhat-rhoam-customer-monitoring grafana-admin-credentials -o 'jsonpath={.data.GF_SECURITY_ADMIN_USER}'| base64 --decode)"':'"$(oc get secret -n redhat-rhoam-customer-monitoring grafana-admin-credentials -o 'jsonpath={.data.GF_SECURITY_ADMIN_PASSWORD}'| base64 --decode)"'@'"$(oc get svc -n redhat-rhoam-customer-monitoring | grep grafana-service | awk '{print $3}')"':3000/api/dashboards/db' < deploy/dashboard-rhoam.json
+   ```
 
 ### 3scale Service Issues
 
