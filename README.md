@@ -3,11 +3,11 @@ A test app for simulating the workload on the openshift cluster based on end-use
 
 ## Container Engine Support
 
-This application supports both **Docker** and **Podman**. The Makefile automatically detects which container engine is available:
+This application supports both **Docker** and **Podman**. The Makefile defaults to Docker for CI/CD compatibility:
 
-- If Podman is available, it uses Podman
-- If only Docker is available, it uses Docker
-- You can override the detection by setting `CONTAINER_ENGINE=docker` or `CONTAINER_ENGINE=podman`
+- Docker is used by default
+- You can override to use Podman by setting `CONTAINER_ENGINE=podman`
+- You can explicitly specify Docker with `CONTAINER_ENGINE=docker`
 
 ### Check your container engine
 

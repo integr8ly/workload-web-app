@@ -1,8 +1,8 @@
 BUILD_TARGET?=workload-app
 NAMESPACE?=workload-web-app
 
-# Auto-detect container engine if not specified
-CONTAINER_ENGINE?=$(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
+# Default to Docker for CI/CD compatibility, but allow override
+CONTAINER_ENGINE?=docker
 
 CONTAINER_PLATFORM?=linux/amd64
 TOOLS_IMAGE?=quay.io/integreatly/workload-web-app-tools
