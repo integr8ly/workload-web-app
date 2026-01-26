@@ -31,8 +31,8 @@ echo ""
 # Determine which engine would be used
 if [ "$DOCKER_AVAILABLE" = true ] && [ "$PODMAN_AVAILABLE" = true ]; then
     echo "🎯 Both container engines are available!"
-    echo "   The Makefile will automatically use: Podman (preferred)"
-    echo "   To use Docker instead: CONTAINER_ENGINE=docker make <target>"
+    echo "   The Makefile will automatically use: Docker (default)"
+    echo "   To use Podman instead: CONTAINER_ENGINE=podman make <target>"
 elif [ "$PODMAN_AVAILABLE" = true ]; then
     echo "🎯 Only Podman is available - it will be used automatically"
 elif [ "$DOCKER_AVAILABLE" = true ]; then
