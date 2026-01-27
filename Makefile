@@ -11,7 +11,7 @@ KUBECONFIG?=${HOME}/.kube/config
 
 # Podman-specific parameters for better compatibility
 ifeq ($(CONTAINER_ENGINE),podman)
-    ADDITIONAL_CONTAINER_ENGINE_PARAMS?=--userns=keep-id
+    ADDITIONAL_CONTAINER_ENGINE_PARAMS?=--privileged
 else
     ADDITIONAL_CONTAINER_ENGINE_PARAMS?=
 endif
